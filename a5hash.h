@@ -1,7 +1,7 @@
 /**
  * @file a5hash.h
  *
- * @version 1.0
+ * @version 1.1
  *
  * @brief The inclusion file for the "a5hash" 64-bit hash function,
  * the "a5rand" 64-bit PRNG.
@@ -36,6 +36,8 @@
 #ifndef A5HASH_INCLUDED
 #define A5HASH_INCLUDED
 
+#define A5HASH_VER_STR "1.1" ///< A5HASH source code version string.
+
 /**
  * @def A5HASH_U64_C( x )
  * @brief Macro that defines a numeric value as unsigned 64-bit value.
@@ -66,8 +68,6 @@
 
 #endif // __cplusplus
 
-#define A5HASH_VER_STR "1.0" ///< A5HASH source code version string.
-
 #define A5HASH_VAL10 A5HASH_U64_C( 0xAAAAAAAAAAAAAAAA ) ///< `10` bit-pairs.
 #define A5HASH_VAL01 A5HASH_U64_C( 0x5555555555555555 ) ///< `01` bit-pairs.
 
@@ -93,6 +93,7 @@
 	#define A5HASH_GCC_BUILTINS ///< Macro that denotes availability of
 		///< GCC-style built-in functions.
 		///<
+
 	#define A5HASH_LIKELY( x ) __builtin_expect( x, 1 )
 
 #else // GCC built-ins check
@@ -108,13 +109,11 @@
  * @brief Macro to force code inlining.
  */
 
-#if defined( i386 ) || defined( __i386 ) || defined( __i386__ ) || \
-	defined( _M_IX86 )
+#if !defined( __LP64__ ) && !defined( _LP64 ) && SIZE_MAX <= 0xFFFFFFFFU
 
 	#define A5HASH_INLINE_F A5HASH_INLINE
-	#define A5HASH_X86 ///< Macro denotes x86 platform.
 
-#else // i386
+#else // 32-bit platform check
 
 	#if defined( A5HASH_GCC_BUILTINS )
 
@@ -130,7 +129,7 @@
 
 	#endif // defined( _MSC_VER )
 
-#endif // i386
+#endif // 32-bit platform check
 
 /**
  * @{
@@ -219,8 +218,9 @@ A5HASH_INLINE_F void a5hash_umul128( const uint64_t u, const uint64_t v,
 /**
  * @brief A5HASH 64-bit hash function.
  *
- * Produces and returns a 64-bit hash value of the specified message, string,
- * or binary data block. Designed for 64-bit hash-table and hash-map uses.
+ * Produces and returns a 64-bit hash value (digest) of the specified message,
+ * string, or binary data block. Designed for string/small key data hash-map
+ * and hash-table uses.
  *
  * @param Msg0 The message to produce a hash from. The alignment of this
  * pointer is unimportant. It is valid to pass 0 when `MsgLen` equals 0.
@@ -280,24 +280,25 @@ A5HASH_INLINE_F uint64_t a5hash( const void* const Msg0, size_t MsgLen,
 	}
 	else
 	{
-		while( A5HASH_LIKELY( MsgLen > 16 ))
+		do
 		{
 			a5hash_umul128( Seed1 ^ a5hash_lu64( Msg ),
 				Seed2 ^ a5hash_lu64( Msg + 8 ), &Seed1, &Seed2 );
 
-			Seed1 ^= A5HASH_VAL01;
-			Seed2 ^= A5HASH_VAL10;
-
 			MsgLen -= 16;
 			Msg += 16;
 
-		}
+			Seed1 ^= A5HASH_VAL01;
+			Seed2 ^= A5HASH_VAL10;
+
+		} while( A5HASH_LIKELY( MsgLen > 16 ));
 
 		a = a5hash_lu64( Msg + MsgLen - 16 );
 		b = a5hash_lu64( Msg + MsgLen - 8 );
 	}
 
 	a5hash_umul128( Seed1 ^ a, Seed2 ^ b, &Seed1, &Seed2 );
+
 	Seed1 ^= A5HASH_VAL01;
 	Seed2 ^= A5HASH_VAL10;
 

@@ -5,22 +5,24 @@
 The `a5hash()` function available in the `a5hash.h` file implements a fast
 64-bit hash function, designed for hash-table, hash-map, and bloom-filter
 uses. Function's code is portable, cross-platform, scalar, zero-allocation,
-is header-only, inlineable C (C++ compatible).
+is header-only, inlineable C (C++ compatible). Compatible with 32-bit
+platforms, but the use there is not recommended due to a lacking performance.
 
 This function features a very high hashing throughput for small
 strings/messages (about 11 cycles/hash for 0-64-byte strings). The bulk
 throughput is, however, only moderately fast (10-15 GB/s), and that is for a
 purpose... All newest competing "fast" hash functions try to be fast both in
-ordinary keyed string hash-maps, and in large data hashing. In most cases,
+common keyed string hash-maps, and in large data hashing. In most cases,
 this is done for the sake of better looks in benchmarks as such hash functions
-rarely offer streamed hashing required for large data or file hashing.
+rarely offer streamed hashing required for large data or file hashing...
 
-`a5hash` was designed to be "ultimatively" fast only for hash-tables and
-hash-maps, by utilizing "forced inlining" feature present in all modern C/C++
-compilers: this is easily achievable since in compiled binary form, `a5hash`
-is very small - 360-400 bytes, depending on compiler. Moreover, if the default
-seed (0) is used, or if a constant-size data is being hashed, this further
-reduces the code size and increases the hashing throughput.
+`a5hash` was designed to be "ultimatively" fast only for common string/small
+key data hash-maps and hash-tables, by utilizing "forced inlining" feature
+present in most modern C/C++ compilers: this is easily achievable since in
+compiled binary form, `a5hash` is very small - 360-400 bytes, depending on
+compiler. Moreover, if the default seed (0) is used, or if a constant-size
+data is being hashed, this further reduces the code size and increases the
+hashing throughput.
 
 `a5hash` produces different hashes on big- and little-endian systems. This is
 a deliberate design choice, to narrow down the scope of uses to run-time
@@ -33,10 +35,17 @@ very small code size, and use of a novel mathematical construct. Compared to
 most, if not all, existing hash functions, `a5hash` does not use accumulators:
 the 128-bit result of multiplication is used directly as input on the next
 iteration. It is most definite that mathematics does not offer any simpler way
-to perform hashing and pseudo-random number generation than that.
+to perform hashing than that.
 
 This function passes all [SMHasher](https://github.com/rurban/smhasher) and
-[SMHasher3](https://gitlab.com/fwojcik/smhasher3) tests.
+[SMHasher3](https://gitlab.com/fwojcik/smhasher3) tests. The function was
+also tested with the [xxHash collision tester](https://github.com/Cyan4973/xxHash/tree/dev/tests/collisions)
+at various settings, with the collision statistics meeting the expectations.
+
+This function and its source code (which is
+[ISO C99](https://en.wikipedia.org/wiki/C99)) were quality-tested on:
+Clang, GCC, MSVC, Intel C++ compilers; x86, x86-64 (Intel, AMD), AArch64
+(Apple Silicon) architectures; Windows 11, AlmaLinux 9.3, macOS 15.3.2.
 
 ```c
 #include <stdio.h>
@@ -51,6 +60,10 @@ int main()
     printf( "%llx\n", a5hash( s2, strlen( s2 ), 0 )); // 407efc4aecdf8f80
 }
 ```
+
+As a bonus, the `a5hash.h` file provides the `a5hash_umul128()`
+general-purpose inline function which implements a portable unsigned 64x64 to
+128-bit multiplication.
 
 ## A5RAND ##
 
@@ -70,7 +83,7 @@ int main()
     uint64_t Seed1 = 0, Seed2 = 0;
     int i;
 
-	for( i = 0; i < 8; i++ )
+    for( i = 0; i < 8; i++ )
     {
         printf( "%llx\n", a5rand( &Seed1, &Seed2 ));
     }
