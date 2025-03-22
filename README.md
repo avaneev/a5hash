@@ -35,7 +35,9 @@ very small code size, and use of a novel mathematical construct. Compared to
 most, if not all, existing hash functions, `a5hash` does not use accumulators:
 the 128-bit result of multiplication is used directly as input on the next
 iteration. It is most definite that mathematics does not offer any simpler way
-to perform hashing than that.
+to perform hashing than that. Also, compared to fast "unprotected" variants of
+`wyhash` and `rapidhash`, `a5hash` has no elevated risk of "blinding
+multiplication" happening.
 
 This function passes all [SMHasher](https://github.com/rurban/smhasher) and
 [SMHasher3](https://gitlab.com/fwojcik/smhasher3) tests. The function was
@@ -46,6 +48,8 @@ This function and its source code (which is
 [ISO C99](https://en.wikipedia.org/wiki/C99)) were quality-tested on:
 Clang, GCC, MSVC, Intel C++ compilers; x86, x86-64 (Intel, AMD), AArch64
 (Apple Silicon) architectures; Windows 11, AlmaLinux 9.3, macOS 15.3.2.
+
+## Usage ##
 
 ```c
 #include <stdio.h>
