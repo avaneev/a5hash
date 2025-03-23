@@ -1,6 +1,6 @@
-# A5HASH - Fast Hash Function (in C/C++) #
+# A5HASH - Fast Hash Function (in C/C++)
 
-## Introduction ##
+## Introduction
 
 The `a5hash()` function available in the `a5hash.h` file implements a fast
 64-bit hash function, designed for hash-table, hash-map, and bloom-filter
@@ -36,8 +36,8 @@ most, if not all, existing hash functions, `a5hash` does not use accumulators:
 the 128-bit result of multiplication is used directly as input on the next
 iteration. It is most definite that mathematics does not offer any simpler way
 to perform hashing than that. Also, compared to fast "unprotected" variants of
-`wyhash` and `rapidhash`, `a5hash` has no elevated risk of "blinding
-multiplication" happening.
+`wyhash` and `rapidhash`, `a5hash` has no issue if "blinding multiplication"
+happens.
 
 This function passes all [SMHasher](https://github.com/rurban/smhasher) and
 [SMHasher3](https://gitlab.com/fwojcik/smhasher3) tests. The function was
@@ -49,7 +49,7 @@ This function and its source code (which is
 Clang, GCC, MSVC, Intel C++ compilers; x86, x86-64 (Intel, AMD), AArch64
 (Apple Silicon) architectures; Windows 11, AlmaLinux 9.3, macOS 15.3.2.
 
-## Usage ##
+## Usage
 
 ```c
 #include <stdio.h>
@@ -69,7 +69,7 @@ As a bonus, the `a5hash.h` file provides the `a5hash_umul128()`
 general-purpose inline function which implements a portable unsigned 64x64 to
 128-bit multiplication.
 
-## A5RAND ##
+## A5RAND
 
 The `a5rand()` function available in the `a5hash.h` file implements a
 simple, but reliable, self-starting, and fast (`0.50` cycles/byte) 64-bit
