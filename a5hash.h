@@ -1,7 +1,7 @@
 /**
  * @file a5hash.h
  *
- * @version 1.3
+ * @version 1.4
  *
  * @brief The inclusion file for the "a5hash" 64-bit hash function,
  * the "a5rand" 64-bit PRNG.
@@ -36,7 +36,7 @@
 #ifndef A5HASH_INCLUDED
 #define A5HASH_INCLUDED
 
-#define A5HASH_VER_STR "1.3" ///< A5HASH source code version string.
+#define A5HASH_VER_STR "1.4" ///< A5HASH source code version string.
 
 /**
  * @def A5HASH_U64_C( x )
@@ -146,12 +146,13 @@
 
 #if defined( A5HASH_NS )
 
-	namespace A5HASH_NS
-	{
-		using std :: memcpy;
-		using std :: size_t;
-		using std :: uint32_t;
-		using std :: uint64_t;
+namespace A5HASH_NS
+{
+	using std :: memcpy;
+	using std :: size_t;
+	using std :: uint32_t;
+	using std :: uint64_t;
+	using uint8_t = unsigned char; // For C++ type aliasing compliance.
 
 #endif // defined( A5HASH_NS )
 
@@ -161,7 +162,7 @@
  * @param p Load address.
  */
 
-A5HASH_INLINE_F uint64_t a5hash_lu32( const void* const p ) A5HASH_NOEX
+A5HASH_INLINE_F uint64_t a5hash_lu32( const uint8_t* const p ) A5HASH_NOEX
 {
 	uint32_t v;
 	memcpy( &v, p, 4 );
@@ -169,7 +170,7 @@ A5HASH_INLINE_F uint64_t a5hash_lu32( const void* const p ) A5HASH_NOEX
 	return( v );
 }
 
-A5HASH_INLINE_F uint64_t a5hash_lu64( const void* const p ) A5HASH_NOEX
+A5HASH_INLINE_F uint64_t a5hash_lu64( const uint8_t* const p ) A5HASH_NOEX
 {
 	uint64_t v;
 	memcpy( &v, p, 8 );
@@ -253,7 +254,7 @@ A5HASH_INLINE_F void a5hash_umul128( const uint64_t u, const uint64_t v,
 A5HASH_INLINE_F uint64_t a5hash( const void* const Msg0, size_t MsgLen,
 	const uint64_t UseSeed ) A5HASH_NOEX
 {
-	const unsigned char* Msg = (const unsigned char*) Msg0;
+	const uint8_t* Msg = (const uint8_t*) Msg0;
 
 	const uint64_t val01 = A5HASH_VAL01;
 	const uint64_t val10 = A5HASH_VAL10;
@@ -271,7 +272,7 @@ A5HASH_INLINE_F uint64_t a5hash( const void* const Msg0, size_t MsgLen,
 	{
 		if( A5HASH_LIKELY( MsgLen > 3 ))
 		{
-			const unsigned char* const Msg4 = Msg + MsgLen - 4;
+			const uint8_t* const Msg4 = Msg + MsgLen - 4;
 			const size_t mo = MsgLen >> 3;
 
 			a = a5hash_lu32( Msg ) << 32 | a5hash_lu32( Msg4 );
@@ -367,14 +368,14 @@ A5HASH_INLINE_F uint64_t a5rand( uint64_t* const Seed1,
 
 #if defined( A5HASH_NS )
 
-	}
+}
 
-	namespace
-	{
-		using A5HASH_NS :: a5hash;
-		using A5HASH_NS :: a5hash_umul128;
-		using A5HASH_NS :: a5rand;
-	}
+namespace
+{
+	using A5HASH_NS :: a5hash;
+	using A5HASH_NS :: a5hash_umul128;
+	using A5HASH_NS :: a5rand;
+}
 
 #endif // defined( A5HASH_NS )
 
