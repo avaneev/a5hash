@@ -1,7 +1,7 @@
 /**
  * @file a5hash.h
  *
- * @version 1.2
+ * @version 1.3
  *
  * @brief The inclusion file for the "a5hash" 64-bit hash function,
  * the "a5rand" 64-bit PRNG.
@@ -36,7 +36,7 @@
 #ifndef A5HASH_INCLUDED
 #define A5HASH_INCLUDED
 
-#define A5HASH_VER_STR "1.2" ///< A5HASH source code version string.
+#define A5HASH_VER_STR "1.3" ///< A5HASH source code version string.
 
 /**
  * @def A5HASH_U64_C( x )
@@ -50,6 +50,12 @@
  * environment.
  */
 
+/**
+ * @def A5HASH_NS
+ * @brief Macro that defines an implementation namespace in C++ environment,
+ * with export of relevant symbols to the unnamed namespace.
+ */
+
 #if defined( __cplusplus ) && __cplusplus >= 201103L
 
 	#include <cstdint>
@@ -57,6 +63,7 @@
 
 	#define A5HASH_U64_C( x ) UINT64_C( x )
 	#define A5HASH_NOEX noexcept
+	#define A5HASH_NS a5hash_impl
 
 #else // __cplusplus
 
@@ -68,17 +75,30 @@
 
 #endif // __cplusplus
 
+#if defined( _MSC_VER )
+	#include <intrin.h>
+#endif // defined( _MSC_VER )
+
 #define A5HASH_VAL10 A5HASH_U64_C( 0xAAAAAAAAAAAAAAAA ) ///< `10` bit-pairs.
 #define A5HASH_VAL01 A5HASH_U64_C( 0x5555555555555555 ) ///< `01` bit-pairs.
+
+/**
+ * @def A5HASH_ICC_GCC
+ * @brief Macro that denotes the use of the ICC classic compiler with
+ * GCC-style built-in functions.
+ */
 
 #if defined( __INTEL_COMPILER ) && __INTEL_COMPILER >= 1300 && \
 	!defined( _MSC_VER )
 
-	#define A5HASH_ICC_GCC ///< Macro that denotes the use of the ICC classic
-		///< compiler with GCC-style built-in functions.
-		///<
+	#define A5HASH_ICC_GCC
 
 #endif // ICC check
+
+/**
+ * @def A5HASH_GCC_BUILTINS
+ * @brief Macro that denotes availability of GCC-style built-in functions.
+ */
 
 /**
  * @def A5HASH_LIKELY( x )
@@ -90,10 +110,7 @@
 #if defined( __GNUC__ ) || defined( __clang__ ) || \
 	defined( __IBMC__ ) || defined( __IBMCPP__ ) || defined( A5HASH_ICC_GCC )
 
-	#define A5HASH_GCC_BUILTINS ///< Macro that denotes availability of
-		///< GCC-style built-in functions.
-		///<
-
+	#define A5HASH_GCC_BUILTINS
 	#define A5HASH_LIKELY( x ) __builtin_expect( x, 1 )
 
 #else // GCC built-ins check
@@ -109,11 +126,7 @@
  * @brief Macro to force code inlining.
  */
 
-#if !defined( __LP64__ ) && !defined( _LP64 ) && SIZE_MAX <= 0xFFFFFFFFU
-
-	#define A5HASH_INLINE_F A5HASH_INLINE
-
-#else // 32-bit platform check
+#if defined( __LP64__ ) || defined( _LP64 ) || !( SIZE_MAX <= 0xFFFFFFFFU )
 
 	#if defined( A5HASH_GCC_BUILTINS )
 
@@ -123,13 +136,24 @@
 
 		#define A5HASH_INLINE_F A5HASH_INLINE __forceinline
 
-	#else // defined( _MSC_VER )
-
-		#define A5HASH_INLINE_F A5HASH_INLINE
-
 	#endif // defined( _MSC_VER )
 
-#endif // 32-bit platform check
+#endif // 64-bit platform check
+
+#if !defined( A5HASH_INLINE_F )
+	#define A5HASH_INLINE_F A5HASH_INLINE
+#endif // !defined( A5HASH_INLINE_F )
+
+#if defined( A5HASH_NS )
+
+	namespace A5HASH_NS
+	{
+		using std :: memcpy;
+		using std :: size_t;
+		using std :: uint32_t;
+		using std :: uint64_t;
+
+#endif // defined( A5HASH_NS )
 
 /**
  * @{
@@ -154,10 +178,6 @@ A5HASH_INLINE_F uint64_t a5hash_lu64( const void* const p ) A5HASH_NOEX
 }
 
 /** @} */
-
-#if defined( _MSC_VER )
-	#include <intrin.h>
-#endif // defined( _MSC_VER )
 
 /**
  * @brief 64-bit by 64-bit unsigned multiplication with 128-bit result.
@@ -242,20 +262,20 @@ A5HASH_INLINE_F uint64_t a5hash( const void* const Msg0, size_t MsgLen,
 
 	uint64_t Seed1 = A5HASH_U64_C( 0x243F6A8885A308D3 ) ^ MsgLen;
 	uint64_t Seed2 = A5HASH_U64_C( 0x452821E638D01377 ) ^ MsgLen;
+	uint64_t a, b;
 
 	a5hash_umul128( Seed1 ^ ( UseSeed & val01 ),
 		Seed2 ^ ( UseSeed & val10 ), &Seed1, &Seed2 );
-
-	uint64_t a, b;
 
 	if( A5HASH_LIKELY( MsgLen < 17 ))
 	{
 		if( A5HASH_LIKELY( MsgLen > 3 ))
 		{
 			const unsigned char* const Msg4 = Msg + MsgLen - 4;
+			const size_t mo = MsgLen >> 3;
+
 			a = a5hash_lu32( Msg ) << 32 | a5hash_lu32( Msg4 );
 
-			const size_t mo = MsgLen >> 3;
 			b = a5hash_lu32( Msg + mo * 4 ) << 32 |
 				a5hash_lu32( Msg4 - mo * 4 );
 		}
@@ -267,11 +287,11 @@ A5HASH_INLINE_F uint64_t a5hash( const void* const Msg0, size_t MsgLen,
 
 			if( MsgLen > 1 )
 			{
-				a |= Msg[ 1 ] << 8;
+				a |= (uint64_t) Msg[ 1 ] << 8;
 
 				if( MsgLen > 2 )
 				{
-					a |= Msg[ 2 ] << 16;
+					a |= (uint64_t) Msg[ 2 ] << 16;
 				}
 			}
 		}
@@ -344,5 +364,18 @@ A5HASH_INLINE_F uint64_t a5rand( uint64_t* const Seed1,
 
 	return( s1 ^ s2 );
 }
+
+#if defined( A5HASH_NS )
+
+	}
+
+	namespace
+	{
+		using A5HASH_NS :: a5hash;
+		using A5HASH_NS :: a5hash_umul128;
+		using A5HASH_NS :: a5rand;
+	}
+
+#endif // defined( A5HASH_NS )
 
 #endif // A5HASH_INCLUDED
