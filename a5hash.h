@@ -1,7 +1,7 @@
 /**
  * @file a5hash.h
  *
- * @version 1.4
+ * @version 1.5
  *
  * @brief The inclusion file for the "a5hash" 64-bit hash function,
  * the "a5rand" 64-bit PRNG.
@@ -36,7 +36,7 @@
 #ifndef A5HASH_INCLUDED
 #define A5HASH_INCLUDED
 
-#define A5HASH_VER_STR "1.4" ///< A5HASH source code version string.
+#define A5HASH_VER_STR "1.5" ///< A5HASH source code version string.
 
 /**
  * @def A5HASH_U64_C( x )
@@ -70,7 +70,7 @@
 	#include <stdint.h>
 	#include <string.h>
 
-	#define A5HASH_U64_C( x ) (uint64_t) ( x )
+	#define A5HASH_U64_C( x ) (uint64_t) x
 	#define A5HASH_NOEX
 
 #endif // __cplusplus
@@ -152,7 +152,7 @@ namespace A5HASH_NS
 	using std :: size_t;
 	using std :: uint32_t;
 	using std :: uint64_t;
-	using uint8_t = unsigned char; // For C++ type aliasing compliance.
+	using uint8_t = unsigned char; ///< For C++ type aliasing compliance.
 
 #endif // defined( A5HASH_NS )
 
@@ -365,6 +365,14 @@ A5HASH_INLINE_F uint64_t a5rand( uint64_t* const Seed1,
 
 	return( s1 ^ s2 );
 }
+
+#undef A5HASH_U64_C
+#undef A5HASH_NOEX
+#undef A5HASH_VAL10
+#undef A5HASH_VAL01
+#undef A5HASH_LIKELY
+#undef A5HASH_INLINE
+#undef A5HASH_INLINE_F
 
 #if defined( A5HASH_NS )
 
