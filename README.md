@@ -106,3 +106,11 @@ f7a47a8942e378b5
 966ed0e1a9317374
 aea26585979bf755
 ```
+
+## Thanks
+
+Thanks to [Alisa Sireneva](https://github.com/purplesyringa) for discovering
+an issue with the original `a5hash v1`.
+
+Thanks to Frank J. T. Wojcik and prior authors for
+[SMHasher3](https://gitlab.com/fwojcik/smhasher3).
