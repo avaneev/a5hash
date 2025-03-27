@@ -60,8 +60,8 @@ int main()
     const char s1[] = "This is a test of a5hash.";
     const char s2[] = "7 chars";
 
-    printf( "%llx\n", a5hash( s1, strlen( s1 ), 0 )); // dc668fa09c910a72
-    printf( "%llx\n", a5hash( s2, strlen( s2 ), 0 )); // 407efc4aecdf8f80
+    printf( "%llx\n", a5hash( s1, strlen( s1 ), 0 )); // 1ad6f5565d096e0e
+    printf( "%llx\n", a5hash( s2, strlen( s2 ), 0 )); // 74c52730fa3d29f7
 }
 ```
 
