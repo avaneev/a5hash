@@ -1,7 +1,7 @@
 /**
  * @file a5hash.h
  *
- * @version 2.0
+ * @version 3.0
  *
  * @brief The inclusion file for the "a5hash" 64-bit hash function,
  * the "a5rand" 64-bit PRNG.
@@ -36,7 +36,7 @@
 #ifndef A5HASH_INCLUDED
 #define A5HASH_INCLUDED
 
-#define A5HASH_VER_STR "2.0" ///< A5HASH source code version string.
+#define A5HASH_VER_STR "3.0" ///< A5HASH source code version string.
 
 /**
  * @def A5HASH_U64_C( x )
@@ -312,8 +312,8 @@ A5HASH_INLINE_F uint64_t a5hash( const void* const Msg0, size_t MsgLen,
 			MsgLen -= 16;
 			Msg += 16;
 
-			Seed1 ^= val01;
-			Seed2 ^= val10;
+			Seed1 += val10;
+			Seed2 += val10;
 
 		} while( A5HASH_LIKELY( MsgLen > 16 ));
 
@@ -323,10 +323,7 @@ A5HASH_INLINE_F uint64_t a5hash( const void* const Msg0, size_t MsgLen,
 
 	a5hash_umul128( Seed1 + a, Seed2 + b, &Seed1, &Seed2 );
 
-	Seed1 ^= val01;
-	Seed2 ^= val10;
-
-	a5hash_umul128( Seed1, Seed2, &Seed1, &Seed2 );
+	a5hash_umul128( Seed1 ^ val10, Seed2, &Seed1, &Seed2 );
 
 	return( Seed1 ^ Seed2 );
 }

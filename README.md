@@ -19,7 +19,7 @@ rarely offer streamed hashing required for large data or file hashing...
 `a5hash` was designed to be "ultimatively" fast only for common string/small
 key data hash-maps and hash-tables, by utilizing "forced inlining" feature
 present in most modern C/C++ compilers: this is easily achievable since in
-compiled binary form, `a5hash` is very small - 360-400 bytes, depending on
+compiled binary form, `a5hash` is very small - about 360 bytes, depending on
 compiler. Moreover, if the default seed (0) is used, or if a constant-size
 data is being hashed, this further reduces the code size and increases the
 hashing throughput.
@@ -35,9 +35,7 @@ very small code size, and use of a novel mathematical construct. Compared to
 most, if not all, existing hash functions, `a5hash` does not use accumulators:
 the 128-bit result of multiplication is used directly as input on the next
 iteration. It is most definite that mathematics does not offer any simpler way
-to perform hashing than that. Also, compared to fast "unprotected" variants of
-`wyhash` and `rapidhash`, `a5hash` has no issue if "blinding multiplication"
-happens.
+to perform hashing than that.
 
 This function passes all [SMHasher](https://github.com/rurban/smhasher) and
 [SMHasher3](https://gitlab.com/fwojcik/smhasher3) tests. The function was
@@ -60,8 +58,8 @@ int main()
     const char s1[] = "This is a test of a5hash.";
     const char s2[] = "7 chars";
 
-    printf( "%llx\n", a5hash( s1, strlen( s1 ), 0 )); // 1ad6f5565d096e0e
-    printf( "%llx\n", a5hash( s2, strlen( s2 ), 0 )); // 74c52730fa3d29f7
+    printf( "%llx\n", a5hash( s1, strlen( s1 ), 0 )); // 3b562f6761a96027
+    printf( "%llx\n", a5hash( s2, strlen( s2 ), 0 )); // b0b4cc6075c86244
 }
 ```
 
@@ -74,8 +72,7 @@ general-purpose inline function which implements a portable unsigned 64x64 to
 The `a5rand()` function available in the `a5hash.h` file implements a
 simple, but reliable, self-starting, and fast (`0.50` cycles/byte) 64-bit
 pseudo-random number generator (PRNG) with `2^64` period. It is based on the
-same mathematical construct as the `a5hash` hash function, but uses
-additions of constants instead of XORs, for better statistics. `a5rand` passes
+same mathematical construct as the `a5hash` hash function. `a5rand` passes
 `PractRand` tests.
 
 ```c
