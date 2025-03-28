@@ -38,7 +38,7 @@ iteration. It is most definite that mathematics does not offer any simpler way
 to perform hashing than that. Also, compared to fast "unprotected" variants of
 `wyhash` and `rapidhash`, `a5hash` has no issue if the "blinding
 multiplication" happens - the function immediately recovers zeroed-out
-`seeds`.
+"seeds".
 
 This function passes all [SMHasher](https://github.com/rurban/smhasher) and
 [SMHasher3](https://gitlab.com/fwojcik/smhasher3) tests. The function was
@@ -49,6 +49,8 @@ This function and its source code (which is
 [ISO C99](https://en.wikipedia.org/wiki/C99)) were quality-tested on:
 Clang, GCC, MSVC, Intel C++ compilers; x86, x86-64 (Intel, AMD), AArch64
 (Apple Silicon) architectures; Windows 11, AlmaLinux 9.3, macOS 15.3.2.
+Full C++ compliance is enabled conditionally and automatically, when compiled
+with a C++ compiler.
 
 ## Usage
 
