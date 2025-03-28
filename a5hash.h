@@ -1,7 +1,7 @@
 /**
  * @file a5hash.h
  *
- * @version 4.0
+ * @version 5.0
  *
  * @brief The inclusion file for the "a5hash" 64-bit hash function,
  * the "a5rand" 64-bit PRNG.
@@ -36,7 +36,7 @@
 #ifndef A5HASH_INCLUDED
 #define A5HASH_INCLUDED
 
-#define A5HASH_VER_STR "4.0" ///< A5HASH source code version string.
+#define A5HASH_VER_STR "5.0" ///< A5HASH source code version string.
 
 /**
  * @def A5HASH_U64_C( x )
@@ -256,13 +256,13 @@ A5HASH_INLINE_F uint64_t a5hash( const void* const Msg0, size_t MsgLen,
 {
 	const uint8_t* Msg = (const uint8_t*) Msg0;
 
-	const uint64_t val01 = A5HASH_VAL01;
-	const uint64_t val10 = A5HASH_VAL10;
+	uint64_t val01 = A5HASH_VAL01;
+	uint64_t val10 = A5HASH_VAL10;
 
 	// The seeds are initialized to mantissa bits of PI.
 
 	uint64_t Seed1 = A5HASH_U64_C( 0x243F6A8885A308D3 ) ^ MsgLen;
-	uint64_t Seed2 = A5HASH_U64_C( 0x13198A2E03707344 ) ^ MsgLen;
+	uint64_t Seed2 = A5HASH_U64_C( 0x452821E638D01377 ) ^ MsgLen;
 	uint64_t a, b;
 
 	a5hash_umul128( Seed1 ^ ( UseSeed & val01 ),
@@ -304,15 +304,18 @@ A5HASH_INLINE_F uint64_t a5hash( const void* const Msg0, size_t MsgLen,
 	}
 	else
 	{
+		val01 ^= Seed1;
+		val10 ^= Seed2;
+
 		do
 		{
-			a5hash_umul128( Seed1 + a5hash_lu64( Msg ),
-				Seed2 + a5hash_lu64( Msg + 8 ), &Seed1, &Seed2 );
+			a5hash_umul128( Seed1 ^ a5hash_lu64( Msg ),
+				Seed2 ^ a5hash_lu64( Msg + 8 ), &Seed1, &Seed2 );
 
 			MsgLen -= 16;
 			Msg += 16;
 
-			Seed1 += 1;
+			Seed1 += val01;
 			Seed2 += val10;
 
 		} while( A5HASH_LIKELY( MsgLen > 16 ));
@@ -321,7 +324,7 @@ A5HASH_INLINE_F uint64_t a5hash( const void* const Msg0, size_t MsgLen,
 		b = a5hash_lu64( Msg + MsgLen - 8 );
 	}
 
-	a5hash_umul128( Seed1 + a, Seed2 + b, &Seed1, &Seed2 );
+	a5hash_umul128( Seed1 ^ a, Seed2 ^ b, &Seed1, &Seed2 );
 
 	a5hash_umul128( Seed1 ^ val01, Seed2, &Seed1, &Seed2 );
 

@@ -19,7 +19,7 @@ rarely offer streamed hashing required for large data or file hashing...
 `a5hash` was designed to be "ultimatively" fast only for common string/small
 key data hash-maps and hash-tables, by utilizing "forced inlining" feature
 present in most modern C/C++ compilers: this is easily achievable since in
-compiled binary form, `a5hash` is very small - about 360 bytes, depending on
+compiled binary form, `a5hash` is very small - about 400 bytes, depending on
 compiler. Moreover, if the default seed (0) is used, or if a constant-size
 data is being hashed, this further reduces the code size and increases the
 hashing throughput.
@@ -35,7 +35,10 @@ very small code size, and use of a novel mathematical construct. Compared to
 most, if not all, existing hash functions, `a5hash` does not use accumulators:
 the 128-bit result of multiplication is used directly as input on the next
 iteration. It is most definite that mathematics does not offer any simpler way
-to perform hashing than that.
+to perform hashing than that. Also, compared to fast "unprotected" variants of
+`wyhash` and `rapidhash`, `a5hash` has no issue if the "blinding
+multiplication" happens - the function immediately recovers zeroed-out
+`seeds`.
 
 This function passes all [SMHasher](https://github.com/rurban/smhasher) and
 [SMHasher3](https://gitlab.com/fwojcik/smhasher3) tests. The function was
@@ -58,8 +61,8 @@ int main()
     const char s1[] = "This is a test of a5hash.";
     const char s2[] = "7 chars";
 
-    printf( "%llx\n", a5hash( s1, strlen( s1 ), 0 )); // afb7147d1217fd29
-    printf( "%llx\n", a5hash( s2, strlen( s2 ), 0 )); // 4324ad0382015c57
+    printf( "%llx\n", a5hash( s1, strlen( s1 ), 0 )); // b163640b41959e6b
+    printf( "%llx\n", a5hash( s2, strlen( s2 ), 0 )); // e49a0cc72256bbac
 }
 ```
 
