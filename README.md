@@ -73,6 +73,29 @@ As a bonus, the `a5hash.h` file provides the `a5hash_umul128()`
 general-purpose inline function which implements a portable unsigned 64x64 to
 128-bit multiplication.
 
+## Comparisons
+
+The benchmark was done using [SMHasher3](https://gitlab.com/fwojcik/smhasher3),
+on Xeon E-2386G (RocketLake) running AlmaLinux 9.3. This benchmark includes
+only the fastest hash functions that pass all state-of-the-art tests.
+`XXH3-64` here does not, but it is too popular to not mention it. `rapidhash`
+is a replacement to `wyhash`. The hash functions, except `a5hash` at the
+moment, are a part of the testing package.
+
+Small key speed values are in cycles/hash, other values are in cycles/op.
+`std init` and `std run` are `std::unordered_map` init and running tests,
+`par init` and `par run` are `greg7mdp/parallel-hashmap` init and running
+tests.
+
+|Hash function|Small key speed|std init|std run|par init|par run|
+|----         |----           |----    |----   |----    |----   |
+|a5hash       |**17.65**      |**526** |**403**|299     |**279**|
+|rapidhash    |18.10          |526     |430    |308     |292    |
+|rust-ahash-fb|19.33          |533     |429    |286     |304    |
+|XXH3-64      |21.31          |533     |428    |292     |290    |
+|komihash     |22.54          |539     |434    |**285** |296    |
+|polymurhash  |28.44          |537     |458    |335     |335    |
+
 ## A5RAND
 
 The `a5rand()` function available in the `a5hash.h` file implements a
