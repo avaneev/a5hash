@@ -1,10 +1,13 @@
 /**
  * @file a5hash.h
  *
- * @version 5.0
+ * @version 5.1
  *
  * @brief The inclusion file for the "a5hash" 64-bit hash function,
  * the "a5rand" 64-bit PRNG.
+ *
+ * The source code is written in ISO C99, with full C++ compliance enabled
+ * conditionally and automatically, if compiled with a C++ compiler.
  *
  * Description is available at https://github.com/avaneev/a5hash
  *
@@ -36,7 +39,7 @@
 #ifndef A5HASH_INCLUDED
 #define A5HASH_INCLUDED
 
-#define A5HASH_VER_STR "5.0" ///< A5HASH source code version string.
+#define A5HASH_VER_STR "5.1" ///< A5HASH source code version string.
 
 /**
  * @def A5HASH_U64_C( x )
