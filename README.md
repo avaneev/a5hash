@@ -75,17 +75,17 @@ general-purpose inline function which implements a portable unsigned 64x64 to
 
 ## Comparisons
 
-The benchmark was done using [SMHasher3](https://gitlab.com/fwojcik/smhasher3),
+The benchmark was performed using [SMHasher3](https://gitlab.com/fwojcik/smhasher3),
 on Xeon E-2386G (RocketLake) running AlmaLinux 9.3. This benchmark includes
 only the fastest hash functions that pass all state-of-the-art tests.
-`XXH3-64` here does not, but it is too popular to not mention it. `rapidhash`
+`XXH3-64` here does not, but it is too popular to not include it. `rapidhash`
 is a replacement to `wyhash`. The hash functions, except `a5hash` at the
 moment, are a part of the testing package.
 
 Small key speed values are in cycles/hash, other values are in cycles/op.
 `std init` and `std run` are `std::unordered_map` init and running tests,
 `par init` and `par run` are `greg7mdp/parallel-hashmap` init and running
-tests.
+tests. All values are averages over 10 runs.
 
 |Hash function|Small key speed|std init|std run|par init|par run|
 |----         |----           |----    |----   |----    |----   |
