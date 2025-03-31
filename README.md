@@ -89,7 +89,7 @@ tests. All values are averages over 10 runs.
 
 |Hash function|Small key speed|std init|std run|par init|par run|
 |----         |----           |----    |----   |----    |----   |
-|a5hash       |**17.65**      |**526** |**403**|299     |**279**|
+|a5hash       |**17.63**      |**522** |**403**|297     |**277**|
 |rapidhash    |18.10          |526     |430    |308     |292    |
 |rust-ahash-fb|19.33          |533     |429    |286     |304    |
 |XXH3-64      |21.31          |533     |428    |292     |290    |
@@ -165,3 +165,6 @@ original `a5hash v1`. The issue was fully resolved in `a5hash v5`.
 
 Thanks to Frank J. T. Wojcik and prior authors for
 [SMHasher3](https://gitlab.com/fwojcik/smhasher3).
+
+Thanks to Chris Doty-Humphrey for
+[PractRand](https://pracrand.sourceforge.net/).
