@@ -1,7 +1,7 @@
 /**
  * @file a5hash.h
  *
- * @version 5.1
+ * @version 5.2
  *
  * @brief The inclusion file for the "a5hash" 64-bit hash function,
  * the "a5rand" 64-bit PRNG.
@@ -39,7 +39,15 @@
 #ifndef A5HASH_INCLUDED
 #define A5HASH_INCLUDED
 
-#define A5HASH_VER_STR "5.1" ///< A5HASH source code version string.
+#define A5HASH_VER_STR "5.2" ///< A5HASH source code version string.
+
+/**
+ * @def A5HASH_NS_CUSTOM
+ * @brief If this macro is defined externally, all symbols will be placed into
+ * the C++ namespace specified by the macro, and won't be exported to the
+ * global namespace. WARNING: if the defined value of the macro is empty, the
+ * symbols will be placed into the global namespace anyway.
+ */
 
 /**
  * @def A5HASH_U64_C( x )
@@ -55,18 +63,36 @@
 
 /**
  * @def A5HASH_NS
- * @brief Macro that defines an implementation namespace in C++ environment,
- * with export of relevant symbols to the unnamed namespace.
+ * @brief Macro that defines an actual implementation namespace in C++
+ * environment, with export of relevant symbols to the global namespace
+ * (if `A5HASH_NS_CUSTOM` is undefined).
  */
 
-#if defined( __cplusplus ) && __cplusplus >= 201103L
+#if defined( __cplusplus )
 
-	#include <cstdint>
 	#include <cstring>
 
-	#define A5HASH_U64_C( x ) UINT64_C( x )
-	#define A5HASH_NOEX noexcept
-	#define A5HASH_NS a5hash_impl
+	#if __cplusplus >= 201103L
+
+		#include <cstdint>
+
+		#define A5HASH_U64_C( x ) UINT64_C( x )
+		#define A5HASH_NOEX noexcept
+
+	#else // __cplusplus >= 201103L
+
+		#include <stdint.h>
+
+		#define A5HASH_U64_C( x ) (uint64_t) x
+		#define A5HASH_NOEX throw()
+
+	#endif // __cplusplus >= 201103L
+
+	#if defined( A5HASH_NS_CUSTOM )
+		#define A5HASH_NS A5HASH_NS_CUSTOM
+	#else // defined( A5HASH_NS_CUSTOM )
+		#define A5HASH_NS a5hash_impl
+	#endif // defined( A5HASH_NS_CUSTOM )
 
 #else // __cplusplus
 
@@ -129,7 +155,9 @@
  * @brief Macro to force code inlining.
  */
 
-#if defined( __LP64__ ) || defined( _LP64 ) || !( SIZE_MAX <= 0xFFFFFFFFU )
+#if defined( __LP64__ ) || defined( _LP64 ) || \
+	!( SIZE_MAX <= 0xFFFFFFFFU ) || defined( __x86_64__ ) || \
+	defined( __aarch64__ ) || defined( _M_X64 ) || defined( _M_ARM64 )
 
 	#if defined( A5HASH_GCC_BUILTINS )
 
@@ -152,10 +180,15 @@
 namespace A5HASH_NS {
 
 using std :: memcpy;
-using std :: size_t;
-using std :: uint32_t;
-using std :: uint64_t;
-using uint8_t = unsigned char; ///< For C++ type aliasing compliance.
+
+#if __cplusplus >= 201103L
+
+	using std :: size_t;
+	using std :: uint32_t;
+	using std :: uint64_t;
+	using uint8_t = unsigned char; ///< For C++ type aliasing compliance.
+
+#endif // __cplusplus >= 201103L
 
 #endif // defined( A5HASH_NS )
 
@@ -369,6 +402,24 @@ A5HASH_INLINE_F uint64_t a5rand( uint64_t* const Seed1,
 	return( s1 ^ s2 );
 }
 
+#if defined( A5HASH_NS )
+
+} // namespace A5HASH_NS
+
+#if !defined( A5HASH_NS_CUSTOM )
+
+namespace {
+
+using A5HASH_NS :: a5hash;
+using A5HASH_NS :: a5hash_umul128;
+using A5HASH_NS :: a5rand;
+
+} // namespace
+
+#endif // !defined( A5HASH_NS_CUSTOM )
+
+#endif // defined( A5HASH_NS )
+
 #undef A5HASH_U64_C
 #undef A5HASH_NOEX
 #undef A5HASH_VAL10
@@ -380,19 +431,5 @@ A5HASH_INLINE_F uint64_t a5rand( uint64_t* const Seed1,
 #if defined( A5HASH_ICC_GCC )
 	#undef A5HASH_ICC_GCC
 #endif // defined( A5HASH_ICC_GCC )
-
-#if defined( A5HASH_NS )
-
-} // namespace A5HASH_NS
-
-namespace {
-
-using A5HASH_NS :: a5hash;
-using A5HASH_NS :: a5hash_umul128;
-using A5HASH_NS :: a5rand;
-
-} // namespace
-
-#endif // defined( A5HASH_NS )
 
 #endif // A5HASH_INCLUDED

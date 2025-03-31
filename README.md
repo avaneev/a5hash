@@ -33,12 +33,12 @@ great choice.
 In overall, `a5hash` achieves three goals: ultimate speed at run-time hashing,
 very small code size, and use of a novel mathematical construct. Compared to
 most, if not all, existing hash functions, `a5hash` does not use accumulators
-nor variable "compression": the 128-bit result of multiplication is used
+nor "compression" of variables: the 128-bit result of multiplication is used
 directly as input on the next iteration. It is most definite that mathematics
-does not offer any simpler way to perform hashing than that. Also, compared to
-fast "unprotected" variants of `wyhash` and `rapidhash`, `a5hash` has no issue
-if the "blinding multiplication" happens - the function immediately recovers
-the zeroed-out "seeds".
+does not offer any simpler way to perform high-quality hashing than that.
+Also, compared to fast "unprotected" variants of `wyhash` and `rapidhash`,
+`a5hash` has no issue if the "blinding multiplication" happens - the function
+immediately recovers the zeroed-out "seeds".
 
 This function passes all [SMHasher](https://github.com/rurban/smhasher) and
 [SMHasher3](https://gitlab.com/fwojcik/smhasher3) tests. The function was
@@ -96,6 +96,30 @@ tests. All values are averages over 10 runs.
 |komihash     |22.54          |539     |434    |**285** |296    |
 |polymurhash  |28.44          |537     |458    |335     |335    |
 
+## Customizing C++ namespace
+
+If for some reason, in C++ environment, it is undesired to export `a5hash`
+symbols into the global namespace, the `A5HASH_NS_CUSTOM` macro can be defined
+externally:
+
+```c++
+#define A5HASH_NS_CUSTOM a5hash
+#include "a5hash.h"
+```
+
+Similarly, `a5hash` symbols can be placed into any other custom namespace
+(e.g., a namespace with hash functions):
+
+```c++
+#define A5HASH_NS_CUSTOM my_hashes
+#include "a5hash.h"
+```
+
+This way, `a5hash` functions can be referenced like `my_hashes::a5hash(...)`.
+Note that since all `a5hash` functions have a `static inline` specifier, there
+can be no ABI conflicts, even if the `a5hash.h` header is included in
+unrelated, mixed C/C++, compilation units.
+
 ## A5RAND
 
 The `a5rand()` function available in the `a5hash.h` file implements a
@@ -136,7 +160,8 @@ aea26585979bf755
 ## Thanks
 
 Thanks to [Alisa Sireneva](https://github.com/purplesyringa) for discovering
-an issue with the original `a5hash v1`.
+a potential issue (however, requiring inputs longer than 1000 bytes) with the
+original `a5hash v1`. The issue was fully resolved in `a5hash v5`.
 
 Thanks to Frank J. T. Wojcik and prior authors for
 [SMHasher3](https://gitlab.com/fwojcik/smhasher3).
