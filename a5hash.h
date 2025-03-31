@@ -1,7 +1,7 @@
 /**
  * @file a5hash.h
  *
- * @version 5.2
+ * @version 5.3
  *
  * @brief The inclusion file for the "a5hash" 64-bit hash function,
  * the "a5rand" 64-bit PRNG.
@@ -39,7 +39,7 @@
 #ifndef A5HASH_INCLUDED
 #define A5HASH_INCLUDED
 
-#define A5HASH_VER_STR "5.2" ///< A5HASH source code version string.
+#define A5HASH_VER_STR "5.3" ///< A5HASH source code version string.
 
 /**
  * @def A5HASH_NS_CUSTOM
@@ -96,8 +96,8 @@
 
 #else // __cplusplus
 
-	#include <stdint.h>
 	#include <string.h>
+	#include <stdint.h>
 
 	#define A5HASH_U64_C( x ) (uint64_t) x
 	#define A5HASH_NOEX
@@ -156,7 +156,8 @@
  */
 
 #if defined( __LP64__ ) || defined( _LP64 ) || \
-	!( SIZE_MAX <= 0xFFFFFFFFU ) || defined( __x86_64__ ) || \
+	!( SIZE_MAX <= 0xFFFFFFFFU ) || ( defined( UINTPTR_MAX ) && \
+	!( UINTPTR_MAX <= 0xFFFFFFFFU )) || defined( __x86_64__ ) || \
 	defined( __aarch64__ ) || defined( _M_X64 ) || defined( _M_ARM64 )
 
 	#if defined( A5HASH_GCC_BUILTINS )
@@ -180,10 +181,10 @@
 namespace A5HASH_NS {
 
 using std :: memcpy;
+using std :: size_t;
 
 #if __cplusplus >= 201103L
 
-	using std :: size_t;
 	using std :: uint32_t;
 	using std :: uint64_t;
 	using uint8_t = unsigned char; ///< For C++ type aliasing compliance.
