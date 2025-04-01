@@ -9,12 +9,13 @@ is header-only, inlineable C (C++ compatible). Compatible with 32-bit
 platforms, but the use there is not recommended due to a lacking performance.
 
 This function features a very high hashing throughput for small
-strings/messages (about 11 cycles/hash for 0-64-byte strings). The bulk
-throughput is, however, only moderately fast (10-15 GB/s), and that is for a
-purpose... All newest competing "fast" hash functions try to be fast both in
-common keyed string hash-maps, and in large data hashing. In most cases,
-this is done for the sake of better looks in benchmarks as such hash functions
-rarely offer streamed hashing required for large data or file hashing...
+strings/messages (about 11 cycles/hash for 0-64-byte strings, hashed
+repeatedly). The bulk throughput is, however, only moderately fast
+(10-15 GB/s), and that is for a purpose... All newest competing "fast" hash
+functions try to be fast both in common keyed string hash-maps, and in large
+data hashing. In most cases, this is done for the sake of better looks in
+benchmarks as such hash functions rarely offer streamed hashing required for
+large data or file hashing...
 
 `a5hash` was designed to be "ultimatively" fast only for common string/small
 key data hash-maps and hash-tables, by utilizing "forced inlining" feature
@@ -89,7 +90,7 @@ tests. All values are averages over 10 runs.
 
 |Hash function|Small key speed|std init|std run|par init|par run|
 |----         |----           |----    |----   |----    |----   |
-|a5hash       |**17.63**      |**522** |**403**|297     |**277**|
+|a5hash       |**17.41**      |**519** |**404**|294     |**277**|
 |rapidhash    |18.10          |526     |430    |308     |292    |
 |rust-ahash-fb|19.33          |533     |429    |286     |304    |
 |XXH3-64      |21.31          |533     |428    |292     |290    |
