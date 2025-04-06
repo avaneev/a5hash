@@ -1,7 +1,7 @@
 /**
  * @file a5hash.h
  *
- * @version 5.5
+ * @version 5.6
  *
  * @brief The inclusion file for the "a5hash" 64-bit hash function,
  * the "a5rand" 64-bit PRNG.
@@ -39,7 +39,7 @@
 #ifndef A5HASH_INCLUDED
 #define A5HASH_INCLUDED
 
-#define A5HASH_VER_STR "5.5" ///< A5HASH source code version string.
+#define A5HASH_VER_STR "5.6" ///< A5HASH source code version string.
 
 /**
  * @def A5HASH_NS_CUSTOM
@@ -65,7 +65,7 @@
  * @def A5HASH_NS
  * @brief Macro that defines an actual implementation namespace in C++
  * environment, with export of relevant symbols to the global namespace
- * (if `A5HASH_NS_CUSTOM` is undefined).
+ * (if @ref A5HASH_NS_CUSTOM is undefined).
  */
 
 #if defined( __cplusplus )
@@ -421,16 +421,21 @@ using A5HASH_NS :: a5rand;
 
 #endif // defined( A5HASH_NS )
 
+// Defines for Doxygen.
+
+#if !defined( A5HASH_NS_CUSTOM )
+	#define A5HASH_NS_CUSTOM
+#endif // !defined( A5HASH_NS_CUSTOM )
+
+#undef A5HASH_NS_CUSTOM
 #undef A5HASH_U64_C
 #undef A5HASH_NOEX
 #undef A5HASH_VAL10
 #undef A5HASH_VAL01
+#undef A5HASH_ICC_GCC
+#undef A5HASH_GCC_BUILTINS
 #undef A5HASH_LIKELY
 #undef A5HASH_INLINE
 #undef A5HASH_INLINE_F
-
-#if defined( A5HASH_ICC_GCC )
-	#undef A5HASH_ICC_GCC
-#endif // defined( A5HASH_ICC_GCC )
 
 #endif // A5HASH_INCLUDED

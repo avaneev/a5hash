@@ -20,10 +20,10 @@ large data or file hashing...
 `a5hash` was designed to be "ultimatively" fast only for common string/small
 key data hash-maps and hash-tables, by utilizing "forced inlining" feature
 present in most modern C/C++ compilers: this is easily achievable since in
-compiled binary form, `a5hash` is very small - about 400 bytes, depending on
-compiler. Moreover, if the default seed (0) is used, or if a constant-size
-data is being hashed, this further reduces the code size and increases the
-hashing throughput.
+compiled binary form, `a5hash` is very small - about 300-400 bytes, depending
+on compiler and architecture. Moreover, if the default seed (0) is used, or if
+a constant-size data is being hashed, this further reduces the code size and
+increases the hashing throughput.
 
 `a5hash` produces different hashes on big- and little-endian systems. This is
 a deliberate design choice, to narrow down the scope of uses to run-time
