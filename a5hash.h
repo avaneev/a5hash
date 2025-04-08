@@ -1,7 +1,7 @@
 /**
  * @file a5hash.h
  *
- * @version 5.6
+ * @version 5.7
  *
  * @brief The inclusion file for the "a5hash" 64-bit hash function,
  * the "a5rand" 64-bit PRNG.
@@ -39,7 +39,7 @@
 #ifndef A5HASH_INCLUDED
 #define A5HASH_INCLUDED
 
-#define A5HASH_VER_STR "5.6" ///< A5HASH source code version string.
+#define A5HASH_VER_STR "5.7" ///< A5HASH source code version string.
 
 /**
  * @def A5HASH_NS_CUSTOM
@@ -94,7 +94,7 @@
 		#define A5HASH_NS a5hash_impl
 	#endif // defined( A5HASH_NS_CUSTOM )
 
-#else // __cplusplus
+#else // defined( __cplusplus )
 
 	#include <string.h>
 	#include <stdint.h>
@@ -102,7 +102,7 @@
 	#define A5HASH_U64_C( x ) (uint64_t) x
 	#define A5HASH_NOEX
 
-#endif // __cplusplus
+#endif // defined( __cplusplus )
 
 #if defined( _MSC_VER )
 	#include <intrin.h>
@@ -129,22 +129,10 @@
  * @brief Macro that denotes availability of GCC-style built-in functions.
  */
 
-/**
- * @def A5HASH_LIKELY( x )
- * @brief Likelihood macro that is used for manually-guided
- * micro-optimization.
- * @param x Expression that is likely to be evaluated to `true`.
- */
-
 #if defined( __GNUC__ ) || defined( __clang__ ) || \
 	defined( __IBMC__ ) || defined( __IBMCPP__ ) || defined( A5HASH_ICC_GCC )
 
 	#define A5HASH_GCC_BUILTINS
-	#define A5HASH_LIKELY( x ) __builtin_expect( x, 1 )
-
-#else // GCC built-ins check
-
-	#define A5HASH_LIKELY( x ) ( x )
 
 #endif // GCC built-ins check
 
@@ -307,9 +295,9 @@ A5HASH_INLINE_F uint64_t a5hash( const void* const Msg0, size_t MsgLen,
 
 	val10 ^= Seed2;
 
-	if( A5HASH_LIKELY( MsgLen < 17 ))
+	if( MsgLen < 17 )
 	{
-		if( A5HASH_LIKELY( MsgLen > 3 ))
+		if( MsgLen > 3 )
 		{
 			const uint8_t* const Msg4 = Msg + MsgLen - 4;
 			const size_t mo = MsgLen >> 3;
@@ -355,7 +343,7 @@ A5HASH_INLINE_F uint64_t a5hash( const void* const Msg0, size_t MsgLen,
 			Seed1 += val01;
 			Seed2 += val10;
 
-		} while( A5HASH_LIKELY( MsgLen > 16 ));
+		} while( MsgLen > 16 );
 
 		a = a5hash_lu64( Msg + MsgLen - 16 );
 		b = a5hash_lu64( Msg + MsgLen - 8 );
@@ -434,7 +422,6 @@ using A5HASH_NS :: a5rand;
 #undef A5HASH_VAL01
 #undef A5HASH_ICC_GCC
 #undef A5HASH_GCC_BUILTINS
-#undef A5HASH_LIKELY
 #undef A5HASH_INLINE
 #undef A5HASH_INLINE_F
 
