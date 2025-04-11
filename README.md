@@ -7,6 +7,8 @@ The `a5hash()` function available in the `a5hash.h` file implements a fast
 uses. Function's code is portable, cross-platform, scalar, zero-allocation,
 is header-only, inlineable C (C++ compatible). Compatible with 32-bit
 platforms, but the use there is not recommended due to a lacking performance.
+The `a5hash32()` function provides a native 32-bit compatibility, for small
+hash-tables or hash-maps.
 
 This function features a very high hashing throughput for small
 strings/messages (about 11 cycles/hash for 0-64-byte strings, hashed
@@ -73,6 +75,27 @@ int main()
 As a bonus, the `a5hash.h` file provides the `a5hash_umul128()`
 general-purpose inline function which implements a portable unsigned 64x64 to
 128-bit multiplication.
+
+## A5HASH128
+
+The `a5hash128()` function produces 128-bit hashes, and features a significant
+performance for large data hashing - 25-30 GB/s. It is also fairly fast for
+hash-map uses, but a bit slower than the `a5hash()` function.
+
+```c
+#include <stdio.h>
+#include "a5hash.h"
+
+int main()
+{
+    const char s1[] = "This is a test of a5hash128.";
+	uint64_t h[ 2 ];
+
+	a5hash128( s1, strlen( s1 ), 0, h );
+
+    printf( "%llx%llx\n", h[ 0 ], h[ 1 ]); // d608834ffd24ffcc26eb486ffc018bbb
+}
+```
 
 ## Comparisons
 

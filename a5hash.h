@@ -1,10 +1,11 @@
 /**
  * @file a5hash.h
  *
- * @version 5.7
+ * @version 5.8
  *
  * @brief The inclusion file for the "a5hash" 64-bit hash function,
- * the "a5rand" 64-bit PRNG.
+ * "a5hash32" 32-bit hash function, "a5hash128" 128-bit hash function, and
+ * "a5rand" 64-bit PRNG.
  *
  * The source code is written in ISO C99, with full C++ compliance enabled
  * conditionally and automatically, if compiled with a C++ compiler.
@@ -39,7 +40,7 @@
 #ifndef A5HASH_INCLUDED
 #define A5HASH_INCLUDED
 
-#define A5HASH_VER_STR "5.7" ///< A5HASH source code version string.
+#define A5HASH_VER_STR "5.8" ///< A5HASH source code version string.
 
 /**
  * @def A5HASH_NS_CUSTOM
@@ -52,6 +53,7 @@
 /**
  * @def A5HASH_U64_C( x )
  * @brief Macro that defines a numeric value as unsigned 64-bit value.
+ *
  * @param x Value.
  */
 
@@ -184,10 +186,11 @@ using std :: size_t;
 /**
  * @{
  * @brief Load unsigned value of corresponding bit-size from memory.
+ *
  * @param p Load address.
  */
 
-A5HASH_INLINE_F uint64_t a5hash_lu32( const uint8_t* const p ) A5HASH_NOEX
+A5HASH_INLINE_F uint32_t a5hash_lu32( const uint8_t* const p ) A5HASH_NOEX
 {
 	uint32_t v;
 	memcpy( &v, p, 4 );
@@ -302,9 +305,9 @@ A5HASH_INLINE_F uint64_t a5hash( const void* const Msg0, size_t MsgLen,
 			const uint8_t* const Msg4 = Msg + MsgLen - 4;
 			const size_t mo = MsgLen >> 3;
 
-			a = a5hash_lu32( Msg ) << 32 | a5hash_lu32( Msg4 );
+			a = (uint64_t) a5hash_lu32( Msg ) << 32 | a5hash_lu32( Msg4 );
 
-			b = a5hash_lu32( Msg + mo * 4 ) << 32 |
+			b = (uint64_t) a5hash_lu32( Msg + mo * 4 ) << 32 |
 				a5hash_lu32( Msg4 - mo * 4 );
 		}
 		else
@@ -334,8 +337,8 @@ A5HASH_INLINE_F uint64_t a5hash( const void* const Msg0, size_t MsgLen,
 
 		do
 		{
-			a5hash_umul128( Seed1 ^ a5hash_lu64( Msg ),
-				Seed2 ^ a5hash_lu64( Msg + 8 ), &Seed1, &Seed2 );
+			a5hash_umul128( a5hash_lu64( Msg ) ^ Seed1,
+				a5hash_lu64( Msg + 8 ) ^ Seed2, &Seed1, &Seed2 );
 
 			MsgLen -= 16;
 			Msg += 16;
@@ -349,11 +352,336 @@ A5HASH_INLINE_F uint64_t a5hash( const void* const Msg0, size_t MsgLen,
 		b = a5hash_lu64( Msg + MsgLen - 8 );
 	}
 
-	a5hash_umul128( Seed1 ^ a, Seed2 ^ b, &Seed1, &Seed2 );
+	a5hash_umul128( a ^ Seed1, b ^ Seed2, &Seed1, &Seed2 );
 
-	a5hash_umul128( Seed1 ^ val01, Seed2, &Seed1, &Seed2 );
+	a5hash_umul128( val01 ^ Seed1, Seed2, &Seed1, &Seed2 );
 
 	return( Seed1 ^ Seed2 );
+}
+
+/**
+ * @brief 32-bit by 32-bit unsigned multiplication with 64-bit result.
+ *
+ * @param u Multiplier 1.
+ * @param v Multiplier 2.
+ * @param[out] rl The lower half of the 64-bit result.
+ * @param[out] rh The higher half of the 64-bit result.
+ */
+
+A5HASH_INLINE_F void a5hash_umul64( const uint32_t u, const uint32_t v,
+	uint32_t* const rl, uint32_t* const rh ) A5HASH_NOEX
+{
+	const uint64_t r = (uint64_t) u * v;
+
+	*rl = (uint32_t) r;
+	*rh = (uint32_t) ( r >> 32 );
+}
+
+/**
+ * @brief A5HASH 32-bit hash function.
+ *
+ * Produces and returns a 32-bit hash value (digest) of the specified message,
+ * string, or binary data block. Designed for string/small key data hash-map
+ * and hash-table uses.
+ *
+ * This function works on 32-bit platforms natively, and is not subject to
+ * 64-bit arithmetic penalty of the a5hash() function.
+ *
+ * @param Msg0 The message to produce a hash from. The alignment of this
+ * pointer is unimportant. It is valid to pass 0 when `MsgLen` equals 0.
+ * @param MsgLen Message's length, in bytes, can be zero.
+ * @param UseSeed Optional 32-bit value, to use instead of the default seed
+ * (0). This value can have any statistical quality.
+ * @return 32-bit hash of the input data.
+ */
+
+A5HASH_INLINE_F uint32_t a5hash32( const void* const Msg0, size_t MsgLen,
+	const uint32_t UseSeed ) A5HASH_NOEX
+{
+	const uint8_t* Msg = (const uint8_t*) Msg0;
+
+	uint32_t val01 = (uint32_t) A5HASH_VAL01;
+	uint32_t val10 = (uint32_t) A5HASH_VAL10;
+
+	// The seeds are initialized to mantissa bits of PI.
+
+	uint32_t Seed1 = 0x243F6A88 ^ ( UseSeed & val01 );
+	uint32_t Seed2 = 0x85A308D3 ^ ( UseSeed & val10 );
+	uint32_t Seed3 = 0x452821E6;
+	uint32_t Seed4 = 0x38D01377;
+	uint32_t a, b, c, d;
+
+	Seed1 ^= (uint32_t) MsgLen;
+	Seed2 ^= (uint32_t) MsgLen;
+
+	a5hash_umul64( Seed1, Seed2, &Seed1, &Seed2 );
+
+	if( MsgLen < 17 )
+	{
+		if( MsgLen > 3 )
+		{
+			const uint8_t* const Msg4 = Msg + MsgLen - 4;
+			size_t mo;
+
+			a = a5hash_lu32( Msg );
+			b = a5hash_lu32( Msg4 );
+
+			if( MsgLen < 9 )
+			{
+				goto _fin;
+			}
+
+			mo = MsgLen >> 3;
+
+			c = a5hash_lu32( Msg + mo * 4 );
+			d = a5hash_lu32( Msg4 - mo * 4 );
+		}
+		else
+		{
+			a = 0;
+			b = 0;
+
+			if( MsgLen != 0 )
+			{
+				a = Msg[ 0 ];
+
+				if( MsgLen != 1 )
+				{
+					a |= (uint32_t) Msg[ 1 ] << 8;
+
+					if( MsgLen != 2 )
+					{
+						a |= (uint32_t) Msg[ 2 ] << 16;
+					}
+				}
+			}
+
+			goto _fin;
+		}
+	}
+	else
+	{
+		val01 ^= Seed1;
+		val10 ^= Seed2;
+
+		do
+		{
+			const uint32_t s1 = Seed1;
+			const uint32_t s4 = Seed4;
+
+			a5hash_umul64( a5hash_lu32( Msg ) + Seed1,
+				a5hash_lu32( Msg + 4 ) + Seed2, &Seed1, &Seed2 );
+
+			a5hash_umul64( a5hash_lu32( Msg + 8 ) + Seed3,
+				a5hash_lu32( Msg + 12 ) + Seed4, &Seed3, &Seed4 );
+
+			MsgLen -= 16;
+			Msg += 16;
+
+			Seed1 += val01;
+			Seed2 += s4;
+			Seed3 += s1;
+			Seed4 += val10;
+
+		} while( MsgLen > 16 );
+
+		a = a5hash_lu32( Msg + MsgLen - 8 );
+		b = a5hash_lu32( Msg + MsgLen - 4 );
+
+		if( MsgLen < 9 )
+		{
+			goto _fin;
+		}
+
+		c = a5hash_lu32( Msg + MsgLen - 16 );
+		d = a5hash_lu32( Msg + MsgLen - 12 );
+	}
+
+	a5hash_umul64( c + Seed3, d + Seed4, &Seed3, &Seed4 );
+
+_fin:
+	Seed1 ^= Seed3;
+	Seed2 ^= Seed4;
+
+	a5hash_umul64( a + Seed1, b + Seed2, &Seed1, &Seed2 );
+
+	a5hash_umul64( val01 ^ Seed1, Seed2, &Seed1, &Seed2 );
+
+	return( Seed1 ^ Seed2 );
+}
+
+/**
+ * @brief A5HASH 128-bit hash function.
+ *
+ * Produces and returns a 128-bit hash value (digest) of the specified
+ * message, string, or binary data block. Designed for string/small key data
+ * hash-map and hash-table uses.
+ *
+ * @param Msg0 The message to produce a hash from. The alignment of this
+ * pointer is unimportant. It is valid to pass 0 when `MsgLen` equals 0.
+ * @param MsgLen Message's length, in bytes, can be zero.
+ * @param UseSeed Optional value, to use instead of the default seed (0). This
+ * value can have any statistical quality.
+ * @param[out] HashOut Pointer to 16 bytes of memory, to receive 128-bit hash
+ * of the input data. The alignment of this pointer is unimportant.
+ */
+
+A5HASH_INLINE_F void a5hash128( const void* const Msg0, size_t MsgLen,
+	const uint64_t UseSeed, void* const HashOut ) A5HASH_NOEX
+{
+	const uint8_t* Msg = (const uint8_t*) Msg0;
+
+	uint64_t val01 = A5HASH_VAL01;
+	uint64_t val10 = A5HASH_VAL10;
+
+	// The seeds are initialized to mantissa bits of PI.
+
+	uint64_t Seed1 = A5HASH_U64_C( 0x243F6A8885A308D3 ) ^ ( UseSeed & val01 );
+	uint64_t Seed2 = A5HASH_U64_C( 0x452821E638D01377 ) ^ ( UseSeed & val10 );
+	uint64_t Seed3 = A5HASH_U64_C( 0xA4093822299F31D0 );
+	uint64_t Seed4 = A5HASH_U64_C( 0xC0AC29B7C97C50DD );
+	uint64_t a, b, c, d;
+
+	Seed1 ^= MsgLen;
+	Seed2 ^= MsgLen;
+
+	a5hash_umul128( Seed1, Seed2, &Seed1, &Seed2 );
+
+	if( MsgLen < 33 )
+	{
+		if( MsgLen > 3 )
+		{
+			if( MsgLen < 17 )
+			{
+				const uint8_t* const Msg4 = Msg + MsgLen - 4;
+				const size_t mo = MsgLen >> 3;
+
+				a = (uint64_t) a5hash_lu32( Msg ) << 32 | a5hash_lu32( Msg4 );
+
+				b = (uint64_t) a5hash_lu32( Msg + mo * 4 ) << 32 |
+					a5hash_lu32( Msg4 - mo * 4 );
+
+				goto _fin;
+			}
+
+			a = a5hash_lu64( Msg );
+			b = a5hash_lu64( Msg + 8 );
+
+			c = (uint64_t) a5hash_lu32( Msg + MsgLen - 16 ) << 32 |
+				a5hash_lu32( Msg + MsgLen - 12 );
+
+			d = (uint64_t) a5hash_lu32( Msg + MsgLen - 8 ) << 32 |
+				a5hash_lu32( Msg + MsgLen - 4 );
+		}
+		else
+		{
+			a = 0;
+			b = 0;
+
+			if( MsgLen != 0 )
+			{
+				a = Msg[ 0 ];
+
+				if( MsgLen != 1 )
+				{
+					a |= (uint64_t) Msg[ 1 ] << 8;
+
+					if( MsgLen != 2 )
+					{
+						a |= (uint64_t) Msg[ 2 ] << 16;
+					}
+				}
+			}
+
+			goto _fin;
+		}
+	}
+	else
+	{
+		val01 ^= Seed1;
+		val10 ^= Seed2;
+
+		if( MsgLen > 48 )
+		{
+			uint64_t Seed5 = A5HASH_U64_C( 0x082EFA98EC4E6C89 );
+			uint64_t Seed6 = A5HASH_U64_C( 0x3F84D5B5B5470917 );
+
+			do
+			{
+				const uint64_t s1 = Seed1;
+				const uint64_t s3 = Seed3;
+				const uint64_t s6 = Seed6;
+
+				a5hash_umul128( a5hash_lu64( Msg ) + Seed1,
+					a5hash_lu64( Msg + 8 ) + Seed2, &Seed1, &Seed2 );
+
+				a5hash_umul128( a5hash_lu64( Msg + 16 ) + Seed3,
+					a5hash_lu64( Msg + 24 ) + Seed4, &Seed3, &Seed4 );
+
+				Seed1 += val01;
+				Seed2 += s6;
+				Seed3 += s1;
+				Seed4 += val10;
+
+				a5hash_umul128( a5hash_lu64( Msg + 32 ) + Seed5,
+					a5hash_lu64( Msg + 40 ) + Seed6, &Seed5, &Seed6 );
+
+				MsgLen -= 48;
+
+				Seed5 += s3;
+				Seed6 += val10;
+
+				Msg += 48;
+
+			} while( MsgLen > 48 );
+
+			Seed3 ^= Seed5;
+			Seed4 ^= Seed6;
+		}
+
+		if( MsgLen > 32 )
+		{
+			a5hash_umul128( a5hash_lu64( Msg ) + Seed3,
+				a5hash_lu64( Msg + 8 ) + Seed4, &Seed3, &Seed4 );
+
+			MsgLen -= 16;
+			Msg += 16;
+
+			Seed3 += val01;
+			Seed4 += val10;
+		}
+
+		a = a5hash_lu64( Msg + MsgLen - 16 );
+		b = a5hash_lu64( Msg + MsgLen - 8 );
+
+		if( MsgLen < 17 )
+		{
+			goto _fin;
+		}
+
+		c = a5hash_lu64( Msg + MsgLen - 32 );
+		d = a5hash_lu64( Msg + MsgLen - 24 );
+	}
+
+	a5hash_umul128( c + Seed3, d + Seed4, &Seed3, &Seed4 );
+
+_fin:
+	Seed1 ^= Seed3;
+	Seed2 ^= Seed4;
+
+	a5hash_umul128( a + Seed1, b + Seed2, &Seed1, &Seed2 );
+
+	Seed3 ^= Seed1;
+	Seed4 ^= Seed2;
+
+	a5hash_umul128( val01 ^ Seed1, Seed2, &Seed1, &Seed2 );
+	a5hash_umul128( Seed3, Seed4, &Seed3, &Seed4 );
+
+	const uint64_t hl = Seed1 ^ Seed2;
+	const uint64_t hh = Seed3 ^ Seed4;
+
+	memcpy( HashOut, &hl, 8 );
+	memcpy( (char*) HashOut + 8, &hh, 8 );
 }
 
 /**
@@ -399,8 +727,10 @@ A5HASH_INLINE_F uint64_t a5rand( uint64_t* const Seed1,
 
 namespace {
 
-using A5HASH_NS :: a5hash;
 using A5HASH_NS :: a5hash_umul128;
+using A5HASH_NS :: a5hash;
+using A5HASH_NS :: a5hash32;
+using A5HASH_NS :: a5hash128;
 using A5HASH_NS :: a5rand;
 
 } // namespace
