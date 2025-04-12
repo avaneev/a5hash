@@ -1,7 +1,7 @@
 /**
  * @file a5hash.h
  *
- * @version 5.8
+ * @version 5.9
  *
  * @brief The inclusion file for the "a5hash" 64-bit hash function,
  * "a5hash32" 32-bit hash function, "a5hash128" 128-bit hash function, and
@@ -40,7 +40,7 @@
 #ifndef A5HASH_INCLUDED
 #define A5HASH_INCLUDED
 
-#define A5HASH_VER_STR "5.8" ///< A5HASH source code version string.
+#define A5HASH_VER_STR "5.9" ///< A5HASH source code version string.
 
 /**
  * @def A5HASH_NS_CUSTOM
@@ -64,6 +64,11 @@
  */
 
 /**
+ * @def A5HASH_NULL
+ * @brief Macro that defines "nullptr" value, for C++ guidelines conformance.
+ */
+
+/**
  * @def A5HASH_NS
  * @brief Macro that defines an actual implementation namespace in C++
  * environment, with export of relevant symbols to the global namespace
@@ -80,6 +85,7 @@
 
 		#define A5HASH_U64_C( x ) UINT64_C( x )
 		#define A5HASH_NOEX noexcept
+		#define A5HASH_NULL nullptr
 
 	#else // __cplusplus >= 201103L
 
@@ -87,6 +93,7 @@
 
 		#define A5HASH_U64_C( x ) (uint64_t) x
 		#define A5HASH_NOEX throw()
+		#define A5HASH_NULL NULL
 
 	#endif // __cplusplus >= 201103L
 
@@ -103,6 +110,7 @@
 
 	#define A5HASH_U64_C( x ) (uint64_t) x
 	#define A5HASH_NOEX
+	#define A5HASH_NULL 0
 
 #endif // defined( __cplusplus )
 
@@ -522,12 +530,13 @@ _fin:
  * @param MsgLen Message's length, in bytes, can be zero.
  * @param UseSeed Optional value, to use instead of the default seed (0). This
  * value can have any statistical quality.
- * @param[out] HashOut Pointer to 16 bytes of memory, to receive 128-bit hash
- * of the input data. The alignment of this pointer is unimportant.
+ * @param[out] rh Pointer to 64-bit variable that receives higher 64 bits of
+ * hash. The alignment of this pointer is unimportant. Can be 0.
+ * @return Lower 64 bits of hash of the input data.
  */
 
-A5HASH_INLINE_F void a5hash128( const void* const Msg0, size_t MsgLen,
-	const uint64_t UseSeed, void* const HashOut ) A5HASH_NOEX
+A5HASH_INLINE_F uint64_t a5hash128( const void* const Msg0, size_t MsgLen,
+	const uint64_t UseSeed, void* const rh ) A5HASH_NOEX
 {
 	const uint8_t* Msg = (const uint8_t*) Msg0;
 
@@ -678,10 +687,16 @@ _fin:
 	a5hash_umul128( Seed3, Seed4, &Seed3, &Seed4 );
 
 	const uint64_t hl = Seed1 ^ Seed2;
-	const uint64_t hh = Seed3 ^ Seed4;
 
-	memcpy( HashOut, &hl, 8 );
-	memcpy( (char*) HashOut + 8, &hh, 8 );
+	if( rh == A5HASH_NULL )
+	{
+		return( hl );
+	}
+
+	const uint64_t hh = Seed3 ^ Seed4;
+	memcpy( rh, &hh, 8 );
+
+	return( hl );
 }
 
 /**
@@ -748,6 +763,7 @@ using A5HASH_NS :: a5rand;
 #undef A5HASH_NS_CUSTOM
 #undef A5HASH_U64_C
 #undef A5HASH_NOEX
+#undef A5HASH_NULL
 #undef A5HASH_VAL10
 #undef A5HASH_VAL01
 #undef A5HASH_ICC_GCC

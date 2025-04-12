@@ -89,9 +89,9 @@ hash-map uses, but a bit slower than the `a5hash()` function.
 int main()
 {
     const char s1[] = "This is a test of a5hash128.";
-	uint64_t h[ 2 ];
+    uint64_t h[ 2 ];
 
-	a5hash128( s1, strlen( s1 ), 0, h );
+    h[ 0 ] = a5hash128( s1, strlen( s1 ), 0, h + 1 );
 
     printf( "%llx%llx\n", h[ 0 ], h[ 1 ]); // d608834ffd24ffcc26eb486ffc018bbb
 }
