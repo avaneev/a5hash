@@ -67,8 +67,8 @@ int main()
     const char s1[] = "This is a test of a5hash.";
     const char s2[] = "7 chars";
 
-    printf( "%llx\n", a5hash( s1, strlen( s1 ), 0 )); // b163640b41959e6b
-    printf( "%llx\n", a5hash( s2, strlen( s2 ), 0 )); // e49a0cc72256bbac
+    printf( "%016llx\n", a5hash( s1, strlen( s1 ), 0 )); // b163640b41959e6b
+    printf( "%016llx\n", a5hash( s2, strlen( s2 ), 0 )); // e49a0cc72256bbac
 }
 ```
 
@@ -76,10 +76,10 @@ As a bonus, the `a5hash.h` file provides the `a5hash_umul128()`
 general-purpose inline function which implements a portable unsigned 64x64 to
 128-bit multiplication.
 
-## A5HASH128
+## A5HASH-128
 
 The `a5hash128()` function produces 128-bit hashes, and features a significant
-performance for large data hashing - 25-30 GB/s. It is also fairly fast for
+performance for large data hashing - 25-35 GB/s. It is also fairly fast for
 hash-map uses, but a bit slower than the `a5hash()` function.
 
 ```c
@@ -93,7 +93,7 @@ int main()
 
     h[ 0 ] = a5hash128( s1, strlen( s1 ), 0, h + 1 );
 
-    printf( "%llx%llx\n", h[ 0 ], h[ 1 ]); // d608834ffd24ffcc26eb486ffc018bbb
+    printf( "%016llx%016llx\n", h[ 0 ], h[ 1 ]); // d608834ffd24ffcc26eb486ffc018bbb
 }
 ```
 

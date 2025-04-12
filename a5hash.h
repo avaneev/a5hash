@@ -1,7 +1,7 @@
 /**
  * @file a5hash.h
  *
- * @version 5.10
+ * @version 5.11
  *
  * @brief The inclusion file for the "a5hash" 64-bit hash function,
  * "a5hash32" 32-bit hash function, "a5hash128" 128-bit hash function, and
@@ -40,7 +40,7 @@
 #ifndef A5HASH_INCLUDED
 #define A5HASH_INCLUDED
 
-#define A5HASH_VER_STR "5.10" ///< A5HASH source code version string.
+#define A5HASH_VER_STR "5.11" ///< A5HASH source code version string.
 
 /**
  * @def A5HASH_NS_CUSTOM
@@ -415,14 +415,25 @@ A5HASH_INLINE_F uint32_t a5hash32( const void* const Msg0, size_t MsgLen,
 
 	uint32_t Seed1 = 0x243F6A88 ^ ( UseSeed & val01 );
 	uint32_t Seed2 = 0x85A308D3 ^ ( UseSeed & val10 );
-	uint32_t Seed3 = 0x452821E6;
-	uint32_t Seed4 = 0x38D01377;
+	uint32_t Seed3, Seed4;
 	uint32_t a, b, c, d;
 
 	Seed1 ^= (uint32_t) MsgLen;
 	Seed2 ^= (uint32_t) MsgLen;
 
 	a5hash_umul64( Seed1, Seed2, &Seed1, &Seed2 );
+
+	#if SIZE_MAX <= 0xFFFFFFFFU
+
+		Seed3 = 0xFB0BD3EA;
+		Seed4 = 0x0F58FD47;
+
+	#else // SIZE_MAX <= 0xFFFFFFFFU
+
+		a5hash_umul64( (uint32_t) ( MsgLen >> 32 ) ^ 0x452821E6,
+			(uint32_t) ( MsgLen >> 32 ) ^ 0x38D01377, &Seed3, &Seed4 );
+
+	#endif // SIZE_MAX <= 0xFFFFFFFFU
 
 	if( MsgLen < 17 )
 	{
