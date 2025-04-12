@@ -1,7 +1,7 @@
 /**
  * @file a5hash.h
  *
- * @version 5.9
+ * @version 5.10
  *
  * @brief The inclusion file for the "a5hash" 64-bit hash function,
  * "a5hash32" 32-bit hash function, "a5hash128" 128-bit hash function, and
@@ -40,7 +40,7 @@
 #ifndef A5HASH_INCLUDED
 #define A5HASH_INCLUDED
 
-#define A5HASH_VER_STR "5.9" ///< A5HASH source code version string.
+#define A5HASH_VER_STR "5.10" ///< A5HASH source code version string.
 
 /**
  * @def A5HASH_NS_CUSTOM
@@ -535,7 +535,7 @@ _fin:
  * @return Lower 64 bits of hash of the input data.
  */
 
-A5HASH_INLINE_F uint64_t a5hash128( const void* const Msg0, size_t MsgLen,
+static inline uint64_t a5hash128( const void* const Msg0, size_t MsgLen,
 	const uint64_t UseSeed, void* const rh ) A5HASH_NOEX
 {
 	const uint8_t* Msg = (const uint8_t*) Msg0;
@@ -646,10 +646,15 @@ A5HASH_INLINE_F uint64_t a5hash128( const void* const Msg0, size_t MsgLen,
 
 			Seed3 ^= Seed5;
 			Seed4 ^= Seed6;
-		}
 
-		if( MsgLen > 32 )
+			if( MsgLen > 32 )
+			{
+				goto _tail32;
+			}
+		}
+		else
 		{
+		_tail32:
 			a5hash_umul128( a5hash_lu64( Msg ) + Seed3,
 				a5hash_lu64( Msg + 8 ) + Seed4, &Seed3, &Seed4 );
 
@@ -684,19 +689,16 @@ _fin:
 	Seed4 ^= Seed2;
 
 	a5hash_umul128( val01 ^ Seed1, Seed2, &Seed1, &Seed2 );
-	a5hash_umul128( Seed3, Seed4, &Seed3, &Seed4 );
 
-	const uint64_t hl = Seed1 ^ Seed2;
-
-	if( rh == A5HASH_NULL )
+	if( rh != A5HASH_NULL )
 	{
-		return( hl );
+		a5hash_umul128( Seed3, Seed4, &Seed3, &Seed4 );
+
+		const uint64_t hh = Seed3 ^ Seed4;
+		memcpy( rh, &hh, 8 );
 	}
 
-	const uint64_t hh = Seed3 ^ Seed4;
-	memcpy( rh, &hh, 8 );
-
-	return( hl );
+	return( Seed1 ^ Seed2 );
 }
 
 /**
