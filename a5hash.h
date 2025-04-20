@@ -1,7 +1,7 @@
 /**
  * @file a5hash.h
  *
- * @version 5.11
+ * @version 5.12
  *
  * @brief The inclusion file for the "a5hash" 64-bit hash function,
  * "a5hash32" 32-bit hash function, "a5hash128" 128-bit hash function, and
@@ -40,7 +40,7 @@
 #ifndef A5HASH_INCLUDED
 #define A5HASH_INCLUDED
 
-#define A5HASH_VER_STR "5.11" ///< A5HASH source code version string.
+#define A5HASH_VER_STR "5.12" ///< A5HASH source code version string.
 
 /**
  * @def A5HASH_NS_CUSTOM
@@ -146,7 +146,21 @@
 
 #endif // GCC built-ins check
 
-#define A5HASH_INLINE static inline ///< Inline at compiler's discretion.
+/**
+ * @def A5HASH_INLINE
+ * @brief Macro that defines a function as inlinable at compiler's discretion.
+ */
+
+#if ( defined( __cplusplus ) && __cplusplus >= 201703L ) || \
+	( defined( __STDC_VERSION__ ) && __STDC_VERSION__ >= 202311L )
+
+	#define A5HASH_INLINE [[maybe_unused]] static inline
+
+#else // defined( __cplusplus )
+
+	#define A5HASH_INLINE static inline
+
+#endif // defined( __cplusplus )
 
 /**
  * @def A5HASH_INLINE_F
@@ -241,7 +255,8 @@ A5HASH_INLINE_F void a5hash_umul128( const uint64_t u, const uint64_t v,
 #elif defined( __SIZEOF_INT128__ ) || \
 	( defined( A5HASH_ICC_GCC ) && defined( __x86_64__ ))
 
-	const __uint128_t r = (__uint128_t) u * v;
+	__uint128_t r = u;
+	r *= v;
 
 	*rl = (uint64_t) r;
 	*rh = (uint64_t) ( r >> 64 );
@@ -362,9 +377,9 @@ A5HASH_INLINE_F uint64_t a5hash( const void* const Msg0, size_t MsgLen,
 
 	a5hash_umul128( a ^ Seed1, b ^ Seed2, &Seed1, &Seed2 );
 
-	a5hash_umul128( val01 ^ Seed1, Seed2, &Seed1, &Seed2 );
+	a5hash_umul128( val01 ^ Seed1, Seed2, &a, &b );
 
-	return( Seed1 ^ Seed2 );
+	return( a ^ b );
 }
 
 /**
@@ -413,15 +428,10 @@ A5HASH_INLINE_F uint32_t a5hash32( const void* const Msg0, size_t MsgLen,
 
 	// The seeds are initialized to mantissa bits of PI.
 
-	uint32_t Seed1 = 0x243F6A88 ^ ( UseSeed & val01 );
-	uint32_t Seed2 = 0x85A308D3 ^ ( UseSeed & val10 );
+	uint32_t Seed1 = 0x243F6A88 ^ (uint32_t) MsgLen;
+	uint32_t Seed2 = 0x85A308D3 ^ (uint32_t) MsgLen;
 	uint32_t Seed3, Seed4;
 	uint32_t a, b, c, d;
-
-	Seed1 ^= (uint32_t) MsgLen;
-	Seed2 ^= (uint32_t) MsgLen;
-
-	a5hash_umul64( Seed1, Seed2, &Seed1, &Seed2 );
 
 	#if SIZE_MAX <= 0xFFFFFFFFU
 
@@ -434,6 +444,9 @@ A5HASH_INLINE_F uint32_t a5hash32( const void* const Msg0, size_t MsgLen,
 			(uint32_t) ( MsgLen >> 32 ) ^ 0x38D01377, &Seed3, &Seed4 );
 
 	#endif // SIZE_MAX <= 0xFFFFFFFFU
+
+	a5hash_umul64( Seed2 ^ ( UseSeed & val10 ),
+		Seed1 ^ ( UseSeed & val01 ), &Seed1, &Seed2 );
 
 	if( MsgLen < 17 )
 	{
@@ -524,9 +537,9 @@ _fin:
 
 	a5hash_umul64( a + Seed1, b + Seed2, &Seed1, &Seed2 );
 
-	a5hash_umul64( val01 ^ Seed1, Seed2, &Seed1, &Seed2 );
+	a5hash_umul64( val01 ^ Seed1, Seed2, &a, &b );
 
-	return( Seed1 ^ Seed2 );
+	return( a ^ b );
 }
 
 /**
@@ -546,7 +559,7 @@ _fin:
  * @return Lower 64 bits of hash of the input data.
  */
 
-static inline uint64_t a5hash128( const void* const Msg0, size_t MsgLen,
+A5HASH_INLINE uint64_t a5hash128( const void* const Msg0, size_t MsgLen,
 	const uint64_t UseSeed, void* const rh ) A5HASH_NOEX
 {
 	const uint8_t* Msg = (const uint8_t*) Msg0;
@@ -556,42 +569,26 @@ static inline uint64_t a5hash128( const void* const Msg0, size_t MsgLen,
 
 	// The seeds are initialized to mantissa bits of PI.
 
-	uint64_t Seed1 = A5HASH_U64_C( 0x243F6A8885A308D3 ) ^ ( UseSeed & val01 );
-	uint64_t Seed2 = A5HASH_U64_C( 0x452821E638D01377 ) ^ ( UseSeed & val10 );
+	uint64_t Seed1 = A5HASH_U64_C( 0x243F6A8885A308D3 ) ^ MsgLen;
+	uint64_t Seed2 = A5HASH_U64_C( 0x452821E638D01377 ) ^ MsgLen;
 	uint64_t Seed3 = A5HASH_U64_C( 0xA4093822299F31D0 );
 	uint64_t Seed4 = A5HASH_U64_C( 0xC0AC29B7C97C50DD );
 	uint64_t a, b, c, d;
 
-	Seed1 ^= MsgLen;
-	Seed2 ^= MsgLen;
+	a5hash_umul128( Seed2 ^ ( UseSeed & val10 ),
+		Seed1 ^ ( UseSeed & val01 ), &Seed1, &Seed2 );
 
-	a5hash_umul128( Seed1, Seed2, &Seed1, &Seed2 );
-
-	if( MsgLen < 33 )
+	if( MsgLen < 17 )
 	{
 		if( MsgLen > 3 )
 		{
-			if( MsgLen < 17 )
-			{
-				const uint8_t* const Msg4 = Msg + MsgLen - 4;
-				const size_t mo = MsgLen >> 3;
+			const uint8_t* const Msg4 = Msg + MsgLen - 4;
+			const size_t mo = MsgLen >> 3;
 
-				a = (uint64_t) a5hash_lu32( Msg ) << 32 | a5hash_lu32( Msg4 );
+			a = (uint64_t) a5hash_lu32( Msg ) << 32 | a5hash_lu32( Msg4 );
 
-				b = (uint64_t) a5hash_lu32( Msg + mo * 4 ) << 32 |
-					a5hash_lu32( Msg4 - mo * 4 );
-
-				goto _fin;
-			}
-
-			a = a5hash_lu64( Msg );
-			b = a5hash_lu64( Msg + 8 );
-
-			c = (uint64_t) a5hash_lu32( Msg + MsgLen - 16 ) << 32 |
-				a5hash_lu32( Msg + MsgLen - 12 );
-
-			d = (uint64_t) a5hash_lu32( Msg + MsgLen - 8 ) << 32 |
-				a5hash_lu32( Msg + MsgLen - 4 );
+			b = (uint64_t) a5hash_lu32( Msg + mo * 4 ) << 32 |
+				a5hash_lu32( Msg4 - mo * 4 );
 		}
 		else
 		{
@@ -612,9 +609,21 @@ static inline uint64_t a5hash128( const void* const Msg0, size_t MsgLen,
 					}
 				}
 			}
-
-			goto _fin;
 		}
+
+		goto _fin;
+	}
+
+	if( MsgLen < 33 )
+	{
+		a = a5hash_lu64( Msg );
+		b = a5hash_lu64( Msg + 8 );
+
+		c = (uint64_t) a5hash_lu32( Msg + MsgLen - 16 ) << 32 |
+			a5hash_lu32( Msg + MsgLen - 12 );
+
+		d = (uint64_t) a5hash_lu32( Msg + MsgLen - 8 ) << 32 |
+			a5hash_lu32( Msg + MsgLen - 4 );
 	}
 	else
 	{
@@ -696,20 +705,17 @@ _fin:
 
 	a5hash_umul128( a + Seed1, b + Seed2, &Seed1, &Seed2 );
 
-	Seed3 ^= Seed1;
-	Seed4 ^= Seed2;
-
-	a5hash_umul128( val01 ^ Seed1, Seed2, &Seed1, &Seed2 );
+	a5hash_umul128( val01 ^ Seed1, Seed2, &a, &b );
 
 	if( rh != A5HASH_NULL )
 	{
-		a5hash_umul128( Seed3, Seed4, &Seed3, &Seed4 );
+		a5hash_umul128( Seed1 ^ Seed3, Seed2 ^ Seed4, &Seed3, &Seed4 );
 
 		const uint64_t hh = Seed3 ^ Seed4;
 		memcpy( rh, &hh, 8 );
 	}
 
-	return( Seed1 ^ Seed2 );
+	return( a ^ b );
 }
 
 /**

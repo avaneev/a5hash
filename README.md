@@ -7,8 +7,8 @@ The `a5hash()` function available in the `a5hash.h` file implements a fast
 uses. Function's code is portable, cross-platform, scalar, zero-allocation,
 is header-only, inlineable C (C++ compatible). Compatible with 32-bit
 platforms, but the use there is not recommended due to a lacking performance.
-The `a5hash32()` function provides a native 32-bit compatibility, for small
-hash-tables or hash-maps.
+The available `a5hash32()` function provides a native 32-bit compatibility,
+if 32-bit hash values are enough.
 
 This function features a very high hashing throughput for small
 strings/messages (about 11 cycles/hash for 0-64-byte strings, hashed
@@ -30,8 +30,8 @@ increases the hashing throughput.
 `a5hash` produces different hashes on big- and little-endian systems. This is
 a deliberate design choice, to narrow down the scope of uses to run-time
 hashing. If you need a reliable and fast hash function for files, with
-portable hashes, the [komihash](https://github.com/avaneev/komihash) is a
-great choice.
+portable hashes, [komihash](https://github.com/avaneev/komihash) is a great
+choice.
 
 In overall, `a5hash` achieves three goals: ultimate speed at run-time hashing,
 very small code size, and use of a novel mathematical construct. Compared to
@@ -62,7 +62,7 @@ source code is compiled with a C++ compiler.
 #include <stdio.h>
 #include "a5hash.h"
 
-int main()
+int main(void)
 {
     const char s1[] = "This is a test of a5hash.";
     const char s2[] = "7 chars";
@@ -82,11 +82,14 @@ The `a5hash128()` function produces 128-bit hashes, and features a significant
 performance for large data hashing - 25-35 GB/s. It is also fairly fast for
 hash-map uses, but a bit slower than the `a5hash()` function.
 
+By setting function's `rh` pointer argument to 0, it is possible to use the
+function as a 64-bit hash function.
+
 ```c
 #include <stdio.h>
 #include "a5hash.h"
 
-int main()
+int main(void)
 {
     const char s1[] = "This is a test of a5hash128.";
     uint64_t h[ 2 ];
@@ -156,14 +159,14 @@ same mathematical construct as the `a5hash` hash function. `a5rand` passes
 #include <stdio.h>
 #include "a5hash.h"
 
-int main()
+int main(void)
 {
     uint64_t Seed1 = 0, Seed2 = 0;
     int i;
 
     for( i = 0; i < 8; i++ )
     {
-        printf( "%llx\n", a5rand( &Seed1, &Seed2 ));
+        printf( "%016llx\n", a5rand( &Seed1, &Seed2 ));
     }
 }
 ```
