@@ -80,10 +80,12 @@ general-purpose inline function which implements a portable unsigned 64x64 to
 
 The `a5hash128()` function produces 128-bit hashes, and features a significant
 performance for large data hashing - 25-35 GB/s. It is also fairly fast for
-hash-map uses, but a bit slower than the `a5hash()` function.
+hash-map uses, but a bit slower than the `a5hash()` function. But among hashes
+that pass the state-of-the-art tests, it's likely the fastest 128-bit hash
+function for hash-maps.
 
-By setting function's `rh` pointer argument to 0, it is possible to use the
-function as a 64-bit hash function.
+By setting function's `rh` pointer argument to 0, it is also possible to use
+the function as a 64-bit hash function.
 
 ```c
 #include <stdio.h>
@@ -116,7 +118,7 @@ tests. All values are averages over 10 runs.
 
 |Hash function|Small key speed|std init|std run|par init|par run|
 |----         |----           |----    |----   |----    |----   |
-|a5hash       |**17.41**      |**519** |**404**|294     |**277**|
+|a5hash       |**17.20**      |**523** |**404**|294     |**277**|
 |rapidhash    |18.10          |526     |430    |308     |292    |
 |rust-ahash-fb|19.33          |533     |429    |286     |304    |
 |XXH3-64      |21.31          |533     |428    |292     |290    |
