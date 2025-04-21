@@ -80,7 +80,7 @@ general-purpose inline function which implements a portable unsigned 64x64 to
 
 The `a5hash128()` function produces 128-bit hashes, and features a significant
 performance for large data hashing - 25-35 GB/s. It is also fairly fast for
-hash-map uses, but a bit slower than the `a5hash()` function. But among hashes
+hash-map uses, but a bit slower than the `a5hash()` function. Among hashes
 that pass the state-of-the-art tests, it's likely the fastest 128-bit hash
 function for hash-maps.
 

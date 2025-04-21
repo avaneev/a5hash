@@ -1,7 +1,7 @@
 /**
  * @file a5hash.h
  *
- * @version 5.13
+ * @version 5.14
  *
  * @brief The inclusion file for the "a5hash" 64-bit hash function,
  * "a5hash32" 32-bit hash function, "a5hash128" 128-bit hash function, and
@@ -40,7 +40,7 @@
 #ifndef A5HASH_INCLUDED
 #define A5HASH_INCLUDED
 
-#define A5HASH_VER_STR "5.13" ///< A5HASH source code version string.
+#define A5HASH_VER_STR "5.14" ///< A5HASH source code version string.
 
 /**
  * @def A5HASH_NS_CUSTOM
@@ -615,7 +615,41 @@ A5HASH_INLINE uint64_t a5hash128( const void* const Msg0, size_t MsgLen,
 		goto _fin;
 	}
 
-	if( MsgLen > 32 )
+	if( MsgLen < 33 )
+	{
+		a = a5hash_lu64( Msg );
+		b = a5hash_lu64( Msg + 8 );
+
+		c = (uint64_t) a5hash_lu32( Msg + MsgLen - 16 ) << 32 |
+			a5hash_lu32( Msg + MsgLen - 12 );
+
+		d = (uint64_t) a5hash_lu32( Msg + MsgLen - 8 ) << 32 |
+			a5hash_lu32( Msg + MsgLen - 4 );
+
+	_fin0:
+		a5hash_umul128( c + Seed3, d + Seed4, &Seed3, &Seed4 );
+
+	_fin:
+		Seed1 ^= Seed3;
+		Seed2 ^= Seed4;
+
+		a5hash_umul128( a + Seed1, b + Seed2, &Seed1, &Seed2 );
+
+		a5hash_umul128( val01 ^ Seed1, Seed2, &a, &b );
+
+		a ^= b;
+
+		if( rh != A5HASH_NULL )
+		{
+			a5hash_umul128( Seed1 ^ Seed3, Seed2 ^ Seed4, &Seed3, &Seed4 );
+
+			Seed3 ^= Seed4;
+			memcpy( rh, &Seed3, 8 );
+		}
+
+		return( a );
+	}
+	else
 	{
 		val01 ^= Seed1;
 		val10 ^= Seed2;
@@ -629,7 +663,6 @@ A5HASH_INLINE uint64_t a5hash128( const void* const Msg0, size_t MsgLen,
 			{
 				const uint64_t s1 = Seed1;
 				const uint64_t s3 = Seed3;
-				const uint64_t s6 = Seed6;
 
 				a5hash_umul128( a5hash_lu64( Msg ) + Seed1,
 					a5hash_lu64( Msg + 8 ) + Seed2, &Seed1, &Seed2 );
@@ -638,7 +671,7 @@ A5HASH_INLINE uint64_t a5hash128( const void* const Msg0, size_t MsgLen,
 					a5hash_lu64( Msg + 24 ) + Seed4, &Seed3, &Seed4 );
 
 				Seed1 += val01;
-				Seed2 += s6;
+				Seed2 += Seed6;
 				Seed3 += s1;
 				Seed4 += val10;
 
@@ -684,40 +717,9 @@ A5HASH_INLINE uint64_t a5hash128( const void* const Msg0, size_t MsgLen,
 
 		c = a5hash_lu64( Msg + MsgLen - 32 );
 		d = a5hash_lu64( Msg + MsgLen - 24 );
+
+		goto _fin0;
 	}
-	else
-	{
-		a = a5hash_lu64( Msg );
-		b = a5hash_lu64( Msg + 8 );
-
-		c = (uint64_t) a5hash_lu32( Msg + MsgLen - 16 ) << 32 |
-			a5hash_lu32( Msg + MsgLen - 12 );
-
-		d = (uint64_t) a5hash_lu32( Msg + MsgLen - 8 ) << 32 |
-			a5hash_lu32( Msg + MsgLen - 4 );
-	}
-
-	a5hash_umul128( c + Seed3, d + Seed4, &Seed3, &Seed4 );
-
-_fin:
-	Seed1 ^= Seed3;
-	Seed2 ^= Seed4;
-
-	a5hash_umul128( a + Seed1, b + Seed2, &Seed1, &Seed2 );
-
-	a5hash_umul128( val01 ^ Seed1, Seed2, &a, &b );
-
-	a ^= b;
-
-	if( rh != A5HASH_NULL )
-	{
-		a5hash_umul128( Seed1 ^ Seed3, Seed2 ^ Seed4, &Seed3, &Seed4 );
-
-		Seed3 ^= Seed4;
-		memcpy( rh, &Seed3, 8 );
-	}
-
-	return( a );
 }
 
 /**
