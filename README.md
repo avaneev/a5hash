@@ -98,7 +98,7 @@ int main(void)
 
     h[ 0 ] = a5hash128( s1, strlen( s1 ), 0, h + 1 );
 
-    printf( "%016llx%016llx\n", h[ 0 ], h[ 1 ]); // d608834ffd24ffcc26eb486ffc018bbb
+    printf( "%016llx%016llx\n", h[ 0 ], h[ 1 ]); // 98c5ac0564ade8309501bd1fb4535b32
 }
 ```
 

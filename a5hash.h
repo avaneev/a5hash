@@ -1,7 +1,7 @@
 /**
  * @file a5hash.h
  *
- * @version 5.14
+ * @version 5.15
  *
  * @brief The inclusion file for the "a5hash" 64-bit hash function,
  * "a5hash32" 32-bit hash function, "a5hash128" 128-bit hash function, and
@@ -40,7 +40,7 @@
 #ifndef A5HASH_INCLUDED
 #define A5HASH_INCLUDED
 
-#define A5HASH_VER_STR "5.14" ///< A5HASH source code version string.
+#define A5HASH_VER_STR "5.15" ///< A5HASH source code version string.
 
 /**
  * @def A5HASH_NS_CUSTOM
@@ -147,6 +147,27 @@
 #endif // GCC built-ins check
 
 /**
+ * @def A5HASH_BMI2
+ * @brief Macro that denotes availability of `mulx` intrinsic (MSVC-compatible
+ * compilers only).
+ */
+
+#if defined( _MSC_VER )
+	#if defined( __BMI2__ ) || ( !defined( A5HASH_GCC_BUILTINS ) && \
+		defined( _M_AMD64 ) && defined( __AVX2__ ) && \
+		( defined( __INTEL_COMPILER ) || _MSC_VER >= 1900 ))
+
+		#include <immintrin.h>
+		#define A5HASH_BMI2
+
+	#else // BMI2
+
+		#include <intrin.h>
+
+	#endif // BMI2
+#endif // defined( _MSC_VER )
+
+/**
  * @def A5HASH_INLINE
  * @brief Macro that defines a function as inlinable at compiler's discretion.
  */
@@ -170,7 +191,7 @@
 #if defined( __LP64__ ) || defined( _LP64 ) || \
 	!( SIZE_MAX <= 0xFFFFFFFFU ) || ( defined( UINTPTR_MAX ) && \
 	!( UINTPTR_MAX <= 0xFFFFFFFFU )) || defined( __x86_64__ ) || \
-	defined( __aarch64__ ) || defined( _M_X64 ) || defined( _M_ARM64 )
+	defined( __aarch64__ ) || defined( _M_AMD64 ) || defined( _M_ARM64 )
 
 	#if defined( A5HASH_GCC_BUILTINS )
 
@@ -242,8 +263,12 @@ A5HASH_INLINE_F uint64_t a5hash_lu64( const uint8_t* const p ) A5HASH_NOEX
 A5HASH_INLINE_F void a5hash_umul128( const uint64_t u, const uint64_t v,
 	uint64_t* const rl, uint64_t* const rh ) A5HASH_NOEX
 {
-#if defined( _MSC_VER ) && ( defined( _M_ARM64 ) || defined( _M_ARM64EC ) || \
-	( defined( __INTEL_COMPILER ) && defined( _M_X64 )))
+#if defined( A5HASH_BMI2 )
+
+	*rl = _mulx_u64( u, v, rh );
+
+#elif defined( _MSC_VER ) && ( defined( _M_ARM64 ) || defined( _M_ARM64EC ) || \
+	( defined( __INTEL_COMPILER ) && defined( _M_AMD64 )))
 
 	*rl = u * v;
 	*rh = __umulh( u, v );
@@ -619,12 +644,8 @@ A5HASH_INLINE uint64_t a5hash128( const void* const Msg0, size_t MsgLen,
 	{
 		a = a5hash_lu64( Msg );
 		b = a5hash_lu64( Msg + 8 );
-
-		c = (uint64_t) a5hash_lu32( Msg + MsgLen - 16 ) << 32 |
-			a5hash_lu32( Msg + MsgLen - 12 );
-
-		d = (uint64_t) a5hash_lu32( Msg + MsgLen - 8 ) << 32 |
-			a5hash_lu32( Msg + MsgLen - 4 );
+		c = a5hash_lu64( Msg + MsgLen - 16 );
+		d = a5hash_lu64( Msg + MsgLen - 8 );
 
 	_fin0:
 		a5hash_umul128( c + Seed3, d + Seed4, &Seed3, &Seed4 );
@@ -791,6 +812,7 @@ using A5HASH_NS :: a5rand;
 #undef A5HASH_VAL01
 #undef A5HASH_ICC_GCC
 #undef A5HASH_GCC_BUILTINS
+#undef A5HASH_BMI2
 #undef A5HASH_INLINE
 #undef A5HASH_INLINE_F
 
