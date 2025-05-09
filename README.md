@@ -186,6 +186,56 @@ f7a47a8942e378b5
 aea26585979bf755
 ```
 
+## Why A5?
+
+The constants `0xAAAA...` and `0x5555...` represent repetitions of `10` and
+`01` bit-pairs. While they do not look special as adders in PRNGs, or even
+look controversial due to absense of spectral information, they have an
+important property of effectively restoring uniformity of any number.
+
+Consider this code, which calculates sum of successive bit independences of a
+set of numbers, and same of numbers XORed with `0xAAAA` constant, if a
+number's bit independence is low:
+
+```c
+#include <stdint.h>
+#include <stdio.h>
+
+int main(void)
+{
+    int c1[ 6 ] = { 0 };
+    int c2[ 6 ] = { 0 };
+    for( int i = 0; i < ( 1 << 16 ); i++ )
+    {
+        for( int j = 0; j < 6; j++ )
+        {
+            int c = __popcnt(( i ^ ( i << ( 1 + j ))) >> j );
+            if( c < 8 - j )
+            {
+                int i2 = i ^ 0xAAAA;
+                c1[ j ] += c;
+                c2[ j ] += __popcnt(( i2 ^ ( i2 << ( 1 + j ))) >> j );
+            }
+        }
+    }
+    for( int j = 0; j < 6; j++ )
+    {
+        printf( "%i %i\n", c1[ j ], c2[ j ]);
+    }
+}
+```
+
+Output:
+
+```
+84048 164128
+58344 66338
+21331 54049
+5824 8607
+1273 5533
+202 574
+```
+
 ## Thanks
 
 Thanks to [Alisa Sireneva](https://github.com/purplesyringa) for discovering
