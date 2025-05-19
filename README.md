@@ -29,9 +29,10 @@ increases the hashing throughput.
 
 `a5hash` produces different hashes on big- and little-endian systems. This is
 a deliberate design choice, to narrow down the scope of uses to run-time
-hashing. If you need a reliable and fast hash function for files, with
-portable hashes, [komihash](https://github.com/avaneev/komihash) is a great
-choice.
+hashing and embedded storage since endianness-correction usually imposes a
+20% performance penalty. If you need a reliable and fast hash function for
+files, with portable hashes, [komihash](https://github.com/avaneev/komihash)
+is a great choice.
 
 In overall, `a5hash` achieves three goals: ultimate speed at run-time hashing,
 very small code size, and use of a novel mathematical construct. Compared to
