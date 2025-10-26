@@ -45,7 +45,7 @@ Also, compared to fast "unprotected" variants of `wyhash` and `rapidhash`,
 immediately recovers the zeroed-out "seeds".
 
 This function passes all [SMHasher](https://github.com/rurban/smhasher) and
-[SMHasher3]([https://gitlab.com/fwojcik/smhasher3](https://gitlab.com/fwojcik/smhasher3/-/tree/main/results?ref_type=heads))
+[SMHasher3](https://gitlab.com/fwojcik/smhasher3/-/tree/main/results?ref_type=heads)
 tests. The function was also tested with the
 [xxHash collision tester](https://github.com/Cyan4973/xxHash/tree/dev/tests/collisions)
 at various settings, with the collision statistics satisfying the
