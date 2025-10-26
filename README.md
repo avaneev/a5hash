@@ -45,8 +45,9 @@ Also, compared to fast "unprotected" variants of `wyhash` and `rapidhash`,
 immediately recovers the zeroed-out "seeds".
 
 This function passes all [SMHasher](https://github.com/rurban/smhasher) and
-[SMHasher3](https://gitlab.com/fwojcik/smhasher3) tests. The function was
-also tested with the [xxHash collision tester](https://github.com/Cyan4973/xxHash/tree/dev/tests/collisions)
+[SMHasher3]([https://gitlab.com/fwojcik/smhasher3](https://gitlab.com/fwojcik/smhasher3/-/tree/main/results?ref_type=heads))
+tests. The function was also tested with the
+[xxHash collision tester](https://github.com/Cyan4973/xxHash/tree/dev/tests/collisions)
 at various settings, with the collision statistics satisfying the
 expectations.
 
@@ -80,7 +81,7 @@ general-purpose inline function which implements a portable unsigned 64x64 to
 ## A5HASH-128
 
 The `a5hash128()` function produces 128-bit hashes, and features a significant
-performance for large data hashing - 25-35 GB/s. It is also fairly fast for
+performance for large data hashing - 25-45 GB/s. It is also fairly fast for
 hash-map uses, but a bit slower than the `a5hash()` function. Among hashes
 that pass the state-of-the-art tests, it's likely the fastest 128-bit hash
 function for hash-maps.
@@ -109,8 +110,7 @@ The benchmark was performed using [SMHasher3](https://gitlab.com/fwojcik/smhashe
 on Xeon E-2386G (RocketLake) running AlmaLinux 9.3. This benchmark includes
 only the fastest hash functions that pass all state-of-the-art tests.
 `XXH3-64` here does not, but it is too popular to not include it. `rapidhash`
-is a replacement to `wyhash`. The hash functions, except `a5hash` at the
-moment, are a part of the testing package.
+is a replacement to `wyhash`.
 
 Small key speed values are in cycles/hash, other values are in cycles/op.
 `std init` and `std run` are `std::unordered_map` init and running tests,
@@ -248,3 +248,7 @@ Thanks to Frank J. T. Wojcik and prior authors for
 
 Thanks to Chris Doty-Humphrey for
 [PractRand](https://pracrand.sourceforge.net/).
+
+## No Thanks
+
+Reddit for discouragement.
