@@ -1,7 +1,7 @@
 /**
  * @file a5hash.h
  *
- * @version 5.16
+ * @version 5.17
  *
  * @brief The inclusion file for the "a5hash" 64-bit hash function,
  * "a5hash32" 32-bit hash function, "a5hash128" 128-bit hash function, and
@@ -40,7 +40,7 @@
 #ifndef A5HASH_INCLUDED
 #define A5HASH_INCLUDED
 
-#define A5HASH_VER_STR "5.16" ///< A5HASH source code version string.
+#define A5HASH_VER_STR "5.17" ///< A5HASH source code version string.
 
 /**
  * @def A5HASH_NS_CUSTOM
@@ -344,68 +344,61 @@ A5HASH_INLINE_F uint64_t a5hash( const void* const Msg0, size_t MsgLen,
 	a5hash_umul128( Seed2 ^ ( UseSeed & val10 ),
 		Seed1 ^ ( UseSeed & val01 ), &Seed1, &Seed2 );
 
-	val10 ^= Seed2;
-
-	if( MsgLen > 3 )
+	if( MsgLen > 16 )
 	{
-		if( MsgLen > 16 )
+		val01 ^= Seed1;
+		val10 ^= Seed2;
+
+		do
 		{
-			val01 ^= Seed1;
+			a5hash_umul128( a5hash_lu64( Msg ) ^ Seed1,
+				a5hash_lu64( Msg + 8 ) ^ Seed2, &Seed1, &Seed2 );
 
-			do
-			{
-				a5hash_umul128( a5hash_lu64( Msg ) ^ Seed1,
-					a5hash_lu64( Msg + 8 ) ^ Seed2, &Seed1, &Seed2 );
+			MsgLen -= 16;
+			Msg += 16;
 
-				MsgLen -= 16;
-				Msg += 16;
+			Seed1 += val01;
+			Seed2 += val10;
 
-				Seed1 += val01;
-				Seed2 += val10;
-
-			} while( MsgLen > 16 );
-
-			a = a5hash_lu64( Msg + MsgLen - 16 );
-			b = a5hash_lu64( Msg + MsgLen - 8 );
-		}
-		else
-		{
-			const uint8_t* const Msg4 = Msg + MsgLen - 4;
-			const size_t mo = MsgLen >> 3;
-
-			a = (uint64_t) a5hash_lu32( Msg ) << 32 | a5hash_lu32( Msg4 );
-
-			b = (uint64_t) a5hash_lu32( Msg + mo * 4 ) << 32 |
-				a5hash_lu32( Msg4 - mo * 4 );
-		}
-
-	_fin:
-		a5hash_umul128( a ^ Seed1, b ^ Seed2, &Seed1, &Seed2 );
-
-		a5hash_umul128( val01 ^ Seed1, Seed2, &a, &b );
-
-		return( a ^ b );
+		} while( MsgLen > 16 );
 	}
 
-	a = 0;
-	b = 0;
-
-	if( MsgLen != 0 )
+	if( MsgLen < 4 )
 	{
-		a = Msg[ 0 ];
+		a = 0;
+		b = 0;
 
-		if( MsgLen != 1 )
+		if( MsgLen != 0 )
 		{
-			a |= (uint64_t) Msg[ 1 ] << 8;
+			a = Msg[ 0 ];
 
-			if( MsgLen != 2 )
+			if( MsgLen != 1 )
 			{
-				a |= (uint64_t) Msg[ 2 ] << 16;
+				a |= (uint64_t) Msg[ 1 ] << 8;
+
+				if( MsgLen != 2 )
+				{
+					a |= (uint64_t) Msg[ 2 ] << 16;
+				}
 			}
 		}
 	}
+	else
+	{
+		const uint8_t* const Msg4 = Msg + MsgLen - 4;
+		const size_t mo = MsgLen >> 3;
 
-	goto _fin;
+		a = (uint64_t) a5hash_lu32( Msg ) << 32 | a5hash_lu32( Msg4 );
+
+		b = (uint64_t) a5hash_lu32( Msg + mo * 4 ) << 32 |
+			a5hash_lu32( Msg4 - mo * 4 );
+	}
+
+	a5hash_umul128( a ^ Seed1, b ^ Seed2, &Seed1, &Seed2 );
+
+	a5hash_umul128( val01 ^ Seed1, Seed2, &a, &b );
+
+	return( a ^ b );
 }
 
 /**
