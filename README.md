@@ -27,6 +27,13 @@ on compiler and architecture. Moreover, if the default seed (0) is used, or if
 a constant-size data is being hashed, this further reduces the code size and
 increases the hashing throughput.
 
+Note that this function is not cryptographically-secure: in open systems, and
+within any server-side internal structures, it should only be used with a
+secret seed, to minimize the chance of a collision attack (hash flooding).
+Compared to fast "unprotected" variants of `wyhash` and `rapidhash`, `a5hash`
+has no issue if the "blinding multiplication" happens - the function
+immediately recovers the zeroed-out "seeds" (see below).
+
 `a5hash` produces different hashes on big- and little-endian systems. This is
 a deliberate design choice, to narrow down the scope of uses to run-time
 hashing and embedded storage since endianness-correction usually imposes a
@@ -37,12 +44,10 @@ is a great choice.
 In overall, `a5hash` achieves three goals: ultimate speed at run-time hashing,
 very small code size, and use of a novel mathematical construct. Compared to
 most, if not all, existing hash functions, `a5hash` does not use accumulators
-nor "compression" of variables: the 128-bit result of multiplication is used
-directly as input on the next iteration. It is most definite that mathematics
-does not offer any simpler way to perform high-quality hashing than that.
-Also, compared to fast "unprotected" variants of `wyhash` and `rapidhash`,
-`a5hash` has no issue if the "blinding multiplication" happens - the function
-immediately recovers the zeroed-out "seeds".
+nor "compression" of state variables: the 128-bit result of multiplication is
+used directly as input on the next iteration. It is most definite that
+mathematics does not offer any simpler way to perform high-quality hashing
+than that.
 
 This function passes all [SMHasher](https://github.com/rurban/smhasher) and
 [SMHasher3](https://gitlab.com/fwojcik/smhasher3/-/tree/main/results?ref_type=heads)
@@ -103,6 +108,42 @@ int main(void)
     printf( "%016llx%016llx\n", h[ 0 ], h[ 1 ]); // 98c5ac0564ade8309501bd1fb4535b32
 }
 ```
+
+## Blinding Multiplication
+
+The "blinding multiplication" (BM) is a common issue of almost all fast hash
+functions based on NxN bit multiplication involving 2\*N bit input per
+iteration. BM happens when one of the input values coincide with hash
+function's current state or constants, and yields zero result.
+
+While, statistically speaking, hash function's state may transitively become
+zero, and this is a probable outcome, it becomes problematic, if hash function
+can't recover from it quickly, and retain seeded state. `a5hash` quickly
+recovers from BM, with its further state being unknown, if the `UseSeed` is
+unknown. On the contrary, the "unprotected" `rapidhash` does not recover the
+seed - it becomes zero, and thus the state becomes known.
+
+Another issue is that NxN bit multiplication that yields zero discards a half
+of 2\*N bit input completely, potentially leading to collisions. The
+"protected" `rapidhash` tries to tackle this issue, but doing so, it creates
+another issue: combining of inputs on adjacent iterations without
+transformation, which also yields collisions.
+
+However, one should consider the probability of BM happening on arbitrary
+inputs. `a5hash` state (`Seed1` and `Seed2`) is close to uniformly-random at
+all times, which means only purely random input can trigger BM. Textual,
+sparse, or otherwise structured inputs have a negligible chance of BM
+happening.
+
+When the `UseSeed` is unknown, and when the output of the hash function is
+unknown (as in the case of server-side structures), it is simply impossible
+to know immediately, whether or not BM was ever triggered on any hash
+function's iteration (side-channel timing attack requires hash collisions to
+accumulate quickly to be measurable).
+
+To sum up, `a5hash` is probabilistically resistant to blinding multiplication
+in general case, when hash function's `UseSeed` is unknown and hash function's
+output is not exposed.
 
 ## Comparisons
 
