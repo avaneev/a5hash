@@ -5,15 +5,16 @@
 The `a5hash()` function available in the `a5hash.h` file implements a fast
 64-bit hash function, designed for hash-table, hash-map, and bloom-filter
 uses. Function's code is portable, cross-platform, scalar, zero-allocation,
-is header-only, inlineable C (C++ compatible). Compatible with 32-bit
-platforms, but the use there is not recommended due to a lacking performance.
-The available `a5hash32()` function provides a native 32-bit compatibility,
-if 32-bit hash values are enough.
+is header-only, inlineable C (C++ compatible). Provided 64-bit and 128-bit
+hash functions of the `a5hash` family are compatible with 32-bit platforms,
+but the use of them there is not recommended due to a lacking performance.
+Additionally available `a5hash32()` function provides a native 32-bit
+compatibility, if 32-bit hash values are enough.
 
 This function features a very high hashing throughput for small
 strings/messages (about 11 cycles/hash for 0-64-byte strings, hashed
-repeatedly). The bulk throughput is, however, only moderately fast
-(10-15 GB/s), and that is for a purpose... All newest competing "fast" hash
+repeatedly on Zen5). The bulk throughput is, however, only moderately fast
+(15 GB/s), and that is for a purpose... All newest competing "fast" hash
 functions try to be fast both in common keyed string hash-maps, and in large
 data hashing. In most cases, this is done for the sake of better looks in
 benchmarks as such hash functions rarely offer streamed hashing required for
@@ -86,8 +87,8 @@ general-purpose inline function which implements a portable unsigned 64x64 to
 ## A5HASH-128
 
 The `a5hash128()` function produces 128-bit hashes, and features a significant
-performance for large data hashing - 25-45 GB/s. It is also fairly fast for
-hash-map uses, but a bit slower than the `a5hash()` function. Among hashes
+performance for large data hashing - 50 GB/s on Zen5. It is also fairly fast
+for hash-map uses, but a bit slower than the `a5hash()` function. Among hashes
 that pass the state-of-the-art tests, it's likely the fastest 128-bit hash
 function for hash-maps.
 
@@ -129,17 +130,18 @@ of 2\*N bit input completely, potentially leading to collisions. The
 another issue: combining of inputs on adjacent iterations without
 transformation, which also yields collisions.
 
-However, one should consider the probability of BM happening on arbitrary
+However, one should consider the probability of BM happening on practical
 inputs. `a5hash` state (`Seed1` and `Seed2`) is close to uniformly-random at
-all times, which means only purely random input can trigger BM. Textual,
-sparse, or otherwise structured inputs have a negligible chance of BM
-happening.
+all times, which means only purely random input can trigger BM with an
+expected probability. Textual, sparse, or otherwise structured inputs have a
+negligible chance of BM happening: they form a sieve which makes many states
+completely resistant to BM.
 
 When the `UseSeed` is unknown, and when the output of the hash function is
-unknown (as in the case of server-side structures), it is simply impossible
-to know immediately, whether or not BM was ever triggered on any hash
-function's iteration (side-channel timing attack requires hash collisions to
-accumulate quickly to be measurable).
+unknown (as in the case of server-side structures), for an attaker it is
+simply impossible to know immediately, whether or not BM was ever triggered on
+any hash function's iteration (side-channel timing attack requires hash
+collisions to accumulate quickly to be measurable).
 
 To sum up, `a5hash` is probabilistically resistant to blinding multiplication
 in general case, when hash function's `UseSeed` is unknown and hash function's
@@ -230,10 +232,11 @@ aea26585979bf755
 
 ## Why A5?
 
-The constants `0xAAAA...` and `0x5555...` represent repetitions of `10` and
-`01` bit-pairs. While they do not look special as adders in PRNGs, or even
-look controversial due to absense of spectral information, they have an
-important property of effectively restoring uniformity of any number.
+The constants `0xAAAA...` and `0x5555...` used in `a5hash` and `a5rand`
+represent repetitions of `10` and `01` bit-pairs. While they do not look
+special as adders in PRNGs, or even look controversial due to absense of
+spectral information, they have an important property of effectively restoring
+uniformity of any number.
 
 Consider this code, which calculates sum of successive bit independences of a
 set of numbers, and same of numbers XORed with `0xAAAA` constant, if a
