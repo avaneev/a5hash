@@ -134,13 +134,14 @@ another issue: combining of inputs on adjacent iterations without
 transformation, which also yields collisions.
 
 However, one should consider the probability of BM happening on practical
-inputs. `a5hash` state (`Seed1` and `Seed2`) is close to uniformly-random at
-all times, which means only purely random input can trigger BM with an
-expected probability. Textual, sparse, or otherwise structured inputs have a
-negligible chance of BM happening: they form an implicit sieve which makes
-many states completely resistant to BM. In this case, the expected linear
-probability of arbitrary input match to a seed should be multiplied by
-independent probability of not matching due to sieve.
+inputs, in the context of brute-force attack that continuously scans a set of
+inputs, not knowing a fixed seed. `a5hash` state (`Seed1` and `Seed2`) is
+close to uniformly-random at all times, which means only purely random input
+can trigger BM with an expected probability. Textual, sparse, or otherwise
+structured inputs have a negligible chance of BM happening: they form an
+implicit sieve which makes many seeds completely resistant to BM. In this
+case, the expected linear probability of arbitrary input match to a seed
+should be multiplied by independent probability of not matching due to sieve.
 
 When the `UseSeed` is unknown, and when the output of the hash function is
 unknown (as in the case of server-side structures), for an attaker it is
