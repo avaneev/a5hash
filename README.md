@@ -8,8 +8,9 @@ uses. Function's code is portable, cross-platform, scalar, zero-allocation,
 is header-only, inlineable C (C++ compatible). Provided 64-bit and 128-bit
 hash functions of the `a5hash` family are compatible with 32-bit platforms,
 but the use of them there is not recommended due to a lacking performance.
-Additionally available `a5hash32()` function provides a native 32-bit
-compatibility, if 32-bit hash values are enough.
+On 32-bit platforms it is recommended to use the available `a5hash32()`
+function which provides a native 32-bit compatibility, if 32-bit hash values
+are enough.
 
 This function features a very high hashing throughput for small
 strings/messages (about 11 cycles/hash for 0-64-byte strings, hashed
@@ -86,11 +87,12 @@ general-purpose inline function which implements a portable unsigned 64x64 to
 
 ## A5HASH-128
 
-The `a5hash128()` function produces 128-bit hashes, and features a significant
-performance for large data hashing - 50 GB/s on Zen5. It is also fairly fast
-for hash-map uses, but a bit slower than the `a5hash()` function. Among hashes
-that pass the state-of-the-art tests, it's likely the fastest 128-bit hash
-function for hash-maps.
+The `a5hash128()` function produces 128-bit hashes, and, compared to 64-bit
+`a5hash()` function, features a significant performance for large data
+hashing - 50 GB/s on Zen5. It is also fairly fast for hash-map uses, but a bit
+slower than the `a5hash()` function. Among 128-bit hashes that pass the
+state-of-the-art tests, it's likely the fastest 128-bit hash function for
+hash-maps.
 
 By setting function's `rh` pointer argument to 0, it is also possible to use
 the function as a 64-bit hash function.
@@ -119,10 +121,11 @@ function's current state or constants, and yields zero result.
 
 While, statistically speaking, hash function's state may transitively become
 zero, and this is a probable outcome, it becomes problematic, if hash function
-can't recover from it quickly, and retain seeded state. `a5hash` quickly
-recovers from BM, with its further state being unknown, if the `UseSeed` is
-unknown. On the contrary, the "unprotected" `rapidhash` does not recover the
-seed - it becomes zero, and thus the state becomes known.
+can't recover from it quickly, and retain the seeded state. `a5hash` instantly
+recovers from BM (via addition of `val01` and `val10` constants), with its
+further state being unknown, if the `UseSeed` is unknown. On the contrary,
+the "unprotected" `rapidhash` does not recover the seed - it becomes zero,
+and thus the state becomes known.
 
 Another issue is that NxN bit multiplication that yields zero discards a half
 of 2\*N bit input completely, potentially leading to collisions. The
@@ -135,7 +138,9 @@ inputs. `a5hash` state (`Seed1` and `Seed2`) is close to uniformly-random at
 all times, which means only purely random input can trigger BM with an
 expected probability. Textual, sparse, or otherwise structured inputs have a
 negligible chance of BM happening: they form a sieve which makes many states
-completely resistant to BM.
+completely resistant to BM. In this case, the expected linear probability of
+input match to a seed should be multiplied by independent probability of not
+matching due to sieve.
 
 When the `UseSeed` is unknown, and when the output of the hash function is
 unknown (as in the case of server-side structures), for an attaker it is
