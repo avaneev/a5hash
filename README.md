@@ -140,8 +140,8 @@ However, one should consider the probability of BM happening on practical
 inputs, in the context of brute-force attack that continuously scans a set of
 inputs, not knowing a fixed seed. `a5hash` state (`Seed1` and `Seed2`) is
 close to uniformly random at all times, which means BM is triggered with a
-theoretic probability of 2<sup>-64</sup>: this can be considered negligible
-for non-cryptographic use cases.
+theoretic probability of 2<sup>-64</sup> for 64-bit seed: this can be
+considered negligible for non-cryptographic use cases.
 
 When the `UseSeed` is unknown, and when the output of the hash function is
 unknown (as in the case of server-side structures), it is impossible for an
@@ -161,7 +161,7 @@ output is not exposed.
 The benchmark was performed using [SMHasher3](https://gitlab.com/fwojcik/smhasher3),
 on Xeon E-2386G (RocketLake) running AlmaLinux 9.3. This benchmark includes
 only the fastest hash functions that pass all state-of-the-art tests.
-`XXH3-64` here does not, but it is too popular exclude it. `rapidhash` is a
+`XXH3-64` here does not, but it is too popular to exclude it. `rapidhash` is a
 replacement to `wyhash`.
 
 Small key speed values are in cycles/hash, other values are in cycles/op.
