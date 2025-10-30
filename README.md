@@ -4,37 +4,36 @@
 
 The `a5hash()` function available in the `a5hash.h` file implements a fast
 64-bit hash function, designed for hash-table, hash-map, and bloom-filter
-uses. Function's code is portable, cross-platform, scalar, zero-allocation,
-is header-only, inlineable C (C++ compatible). Provided 64-bit and 128-bit
-hash functions of the `a5hash` family are compatible with 32-bit platforms,
-but the use of them there is not recommended due to a lacking performance.
-On 32-bit platforms it is recommended to use the available `a5hash32()`
-function which provides a native 32-bit compatibility, if 32-bit hash values
-are enough.
+uses. The function's code is portable, cross-platform, scalar,
+zero-allocation, and is header-only, inlineable C (C++ compatible). Provided
+64-bit and 128-bit hash functions of the `a5hash` family are compatible with
+32-bit platforms, but the use of them there is not recommended due to lacking
+performance. On 32-bit platforms it is recommended to use the available
+`a5hash32()` function which provides a native 32-bit compatibility, if 32-bit
+hash values are enough.
 
 This function features a very high hashing throughput for small
 strings/messages (about 11 cycles/hash for 0-64-byte strings, hashed
 repeatedly on Zen5). The bulk throughput is, however, only moderately fast
-(15 GB/s), and that is for a purpose... All newest competing "fast" hash
-functions try to be fast both in common keyed string hash-maps, and in large
-data hashing. In most cases, this is done for the sake of better looks in
-benchmarks as such hash functions rarely offer streamed hashing required for
-large data or file hashing...
+(15 GB/s on Ryzen 9950X), and that is for a purpose... All newest competing
+"fast" hash functions try to be fast both in common keyed string hash-maps,
+and in large data hashing. In most cases, this is done for the sake of better
+looks in benchmarks as such hash functions rarely offer streamed hashing
+required for large data or file hashing...
 
-`a5hash` was designed to be "ultimatively" fast only for common string/small
-key data hash-maps and hash-tables, by utilizing "forced inlining" feature
-present in most modern C/C++ compilers: this is easily achievable since in
-compiled binary form, `a5hash` is very small - about 300-400 bytes, depending
-on compiler and architecture. Moreover, if the default seed (0) is used, or if
-a constant-size data is being hashed, this further reduces the code size and
+`a5hash` was designed to be ultimately fast only for common string/small key
+data hash-maps and hash-tables, by utilizing "forced inlining" feature present
+in most modern C/C++ compilers: this is easily achievable since in compiled
+binary form, `a5hash` is very small - about 300-400 bytes, depending on
+compiler and architecture. Moreover, if the default seed (0) is used, or if
+a constant-sized data is being hashed, this further reduces the code size and
 increases the hashing throughput.
 
 Note that this function is not cryptographically-secure: in open systems, and
 within any server-side internal structures, it should only be used with a
 secret seed, to minimize the chance of a collision attack (hash flooding).
-Compared to fast "unprotected" variants of `wyhash` and `rapidhash`, `a5hash`
-has no issue if the "blinding multiplication" happens - the function
-immediately recovers the zeroed-out "seeds" (see below).
+If an occasional "blinding multiplication" happens, `a5hash` immediately
+recovers the zeroed-out "seeds" (see below).
 
 `a5hash` produces different hashes on big- and little-endian systems. This is
 a deliberate design choice, to narrow down the scope of uses to run-time
@@ -47,7 +46,7 @@ In overall, `a5hash` achieves three goals: ultimate speed at run-time hashing,
 very small code size, and use of a novel mathematical construct. Compared to
 most, if not all, existing hash functions, `a5hash` does not use accumulators
 nor "compression" of state variables: the 128-bit result of multiplication is
-used directly as input on the next iteration. It is most definite that
+used directly as input on the next iteration. It is most definitive that
 mathematics does not offer any simpler way to perform high-quality hashing
 than that.
 
@@ -89,9 +88,9 @@ general-purpose inline function which implements a portable unsigned 64x64 to
 
 The `a5hash128()` function produces 128-bit hashes, and, compared to 64-bit
 `a5hash()` function, features a significant performance for large data
-hashing - 50 GB/s on Zen5. It is also fairly fast for hash-map uses, but a bit
-slower than the `a5hash()` function. Among 128-bit hashes that pass the
-state-of-the-art tests, it's likely the fastest 128-bit hash function for
+hashing - 50 GB/s on Ryzen 9950X. It is also fairly fast for hash-map uses,
+but a bit slower than the `a5hash()` function. Among 128-bit hashes that pass
+the state-of-the-art tests, it's likely the fastest 128-bit hash function for
 hash-maps.
 
 By setting function's `rh` pointer argument to 0, it is also possible to use
@@ -117,40 +116,43 @@ int main(void)
 The "blinding multiplication" (BM) is a common issue of almost all fast hash
 functions based on NxN bit multiplication involving 2\*N bit input per
 iteration. BM happens when one of the input values coincide with hash
-function's current state or constants, and yields zero result.
+function's current state or constants, and yields zero result. While each such
+hash function tries to handle BM, in general it is impossible to completely
+"fix" BM without reducing hash function's performance.
 
-While, statistically speaking, hash function's state may transitively become
+While statistically speaking, a hash function's state may transitively become
 zero, and this is a probable outcome, it becomes problematic, if hash function
 can't recover from it quickly, and retain the seeded state. `a5hash` instantly
-recovers from BM (via addition of `val01` and `val10` constants), with its
-further state being unknown, if the `UseSeed` is unknown. On the contrary,
-the "unprotected" `rapidhash` does not recover the seed - it becomes zero,
-and thus the state becomes known.
+recovers from occasional BM (via the addition of `val01` and `val10`
+constants), with its further state being unknown, if the `UseSeed` is unknown.
+On the contrary, the "unprotected" `rapidhash` does not recover the seed - it
+becomes zero, and thus the state becomes known.
 
-Another issue is that NxN bit multiplication that yields zero discards a half
+Another issue is that NxN bit multiplication that yields zero, discards a half
 of 2\*N bit input completely, potentially leading to collisions. The
 "protected" `rapidhash` tries to tackle this issue, but doing so, it creates
-another issue: combining of inputs on adjacent iterations without
-transformation, which also yields collisions.
+another issue: combining inputs on adjacent iterations without transformation,
+which also yields collisions, but in a veiled manner. Also, if BM happens at
+the last input, this input is passed to the final `rapid_mix` call yielding a
+hash value with poor avalanche properties.
 
 However, one should consider the probability of BM happening on practical
 inputs, in the context of brute-force attack that continuously scans a set of
 inputs, not knowing a fixed seed. `a5hash` state (`Seed1` and `Seed2`) is
-close to uniformly-random at all times, which means only purely random input
-can trigger BM with an expected probability. Textual, sparse, or otherwise
-structured inputs have a negligible chance of BM happening: they form an
-implicit sieve which makes many seeds completely resistant to BM. In this
-case, the expected linear probability of arbitrary input match to a seed
-should be multiplied by independent probability of not matching due to sieve.
+close to uniformly-random at all times, which means BM is triggered with a
+theoretic probability of 2[sup]-64[/sup]: this can be considered negligible
+for non-cryptographic use cases.
 
 When the `UseSeed` is unknown, and when the output of the hash function is
-unknown (as in the case of server-side structures), for an attaker it is
-simply impossible to know immediately, whether or not BM was ever triggered on
-any hash function's iteration (side-channel timing attack requires hash
-collisions to accumulate quickly to be measurable).
+unknown (as in the case of server-side structures), for an attacker it is
+impossible to know immediately, whether or not BM was ever triggered on any
+hash function's iteration: side-channel timing attack requires hash collisions
+to accumulate quickly to be measurable. This requires not only triggering BM
+in one of the state variables, but also validating that a serie of additional
+inputs yields multiple collisions.
 
-To sum up, `a5hash` is probabilistically resistant to blinding multiplication
-in general case, when hash function's `UseSeed` is unknown and hash function's
+To sum up, `a5hash` is practically resistant to blinding multiplication in
+general case, when hash function's `UseSeed` is unknown and hash function's
 output is not exposed.
 
 ## Comparisons
