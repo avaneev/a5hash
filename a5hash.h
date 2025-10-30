@@ -1,14 +1,14 @@
 /**
  * @file a5hash.h
  *
- * @version 5.17
+ * @version 5.18
  *
- * @brief The inclusion file for the "a5hash" 64-bit hash function,
- * "a5hash32" 32-bit hash function, "a5hash128" 128-bit hash function, and
- * "a5rand" 64-bit PRNG.
+ * @brief The header file for the "a5hash" 64-bit hash function, "a5hash32"
+ * 32-bit hash function, "a5hash128" 128-bit hash function, and "a5rand"
+ * 64-bit PRNG.
  *
  * The source code is written in ISO C99, with full C++ compliance enabled
- * conditionally and automatically, if compiled with a C++ compiler.
+ * conditionally and automatically when compiled with a C++ compiler.
  *
  * Description is available at https://github.com/avaneev/a5hash
  *
@@ -40,14 +40,14 @@
 #ifndef A5HASH_INCLUDED
 #define A5HASH_INCLUDED
 
-#define A5HASH_VER_STR "5.17" ///< A5HASH source code version string.
+#define A5HASH_VER_STR "5.18" ///< A5HASH source code version string.
 
 /**
  * @def A5HASH_NS_CUSTOM
  * @brief If this macro is defined externally, all symbols will be placed into
- * the C++ namespace specified by the macro, and won't be exported to the
- * global namespace. WARNING: if the defined value of the macro is empty, the
- * symbols will be placed into the global namespace anyway.
+ * the C++ namespace specified by this macro and will not be exported to the
+ * global namespace. WARNING: if the macro's value is empty, the symbols will
+ * be placed into the global namespace anyway.
  */
 
 /**
@@ -65,12 +65,12 @@
 
 /**
  * @def A5HASH_NULL
- * @brief Macro that defines "nullptr" value, for C++ guidelines conformance.
+ * @brief Macro that defines "nullptr" value, for C++ guidelines compliance.
  */
 
 /**
  * @def A5HASH_NS
- * @brief Macro that defines an actual implementation namespace in C++
+ * @brief Macro that defines the actual implementation namespace in C++
  * environment, with export of relevant symbols to the global namespace
  * (if @ref A5HASH_NS_CUSTOM is undefined).
  */
@@ -123,8 +123,8 @@
 
 /**
  * @def A5HASH_ICC_GCC
- * @brief Macro that denotes the use of the ICC classic compiler with
- * GCC-style built-in functions.
+ * @brief Macro that denotes the use of ICC classic compiler with GCC-style
+ * built-in functions.
  */
 
 #if defined( __INTEL_COMPILER ) && __INTEL_COMPILER >= 1300 && \
@@ -148,8 +148,8 @@
 
 /**
  * @def A5HASH_BMI2
- * @brief Macro that denotes availability of `mulx` intrinsic (MSVC-compatible
- * compilers only).
+ * @brief Macro that denotes availability of the `mulx` intrinsic
+ * (MSVC-compatible compilers only).
  */
 
 #if defined( _MSC_VER )
@@ -228,7 +228,7 @@ using std :: size_t;
 
 /**
  * @{
- * @brief Load unsigned value of corresponding bit-size from memory.
+ * @brief Load unsigned value of the specific bit size from memory.
  *
  * @param p Load address.
  */
@@ -252,12 +252,12 @@ A5HASH_INLINE_F uint64_t a5hash_lu64( const uint8_t* const p ) A5HASH_NOEX
 /** @} */
 
 /**
- * @brief 64-bit by 64-bit unsigned multiplication with 128-bit result.
+ * @brief 64-bit by 64-bit unsigned multiplication producing a 128-bit result.
  *
  * @param u Multiplier 1.
  * @param v Multiplier 2.
  * @param[out] rl The lower half of the 128-bit result.
- * @param[out] rh The higher half of the 128-bit result.
+ * @param[out] rh The upper half of the 128-bit result.
  */
 
 A5HASH_INLINE_F void a5hash_umul128( const uint64_t u, const uint64_t v,
@@ -321,9 +321,10 @@ A5HASH_INLINE_F void a5hash_umul128( const uint64_t u, const uint64_t v,
  *
  * @param Msg0 The message to produce a hash from. The alignment of this
  * pointer is unimportant. It is valid to pass 0 when `MsgLen` equals 0.
- * @param MsgLen Message's length, in bytes, can be zero.
- * @param UseSeed Optional value, to use instead of the default seed (0). This
- * value can have any number of significant bits and any statistical quality.
+ * @param MsgLen Message length, in bytes, can be zero.
+ * @param UseSeed An optional value to use instead of the default seed (0).
+ * This value can have any number of significant bits and any statistical
+ * quality.
  * @return 64-bit hash of the input data.
  */
 
@@ -339,7 +340,6 @@ A5HASH_INLINE_F uint64_t a5hash( const void* const Msg0, size_t MsgLen,
 
 	uint64_t Seed1 = A5HASH_U64_C( 0x243F6A8885A308D3 ) ^ MsgLen;
 	uint64_t Seed2 = A5HASH_U64_C( 0x452821E638D01377 ) ^ MsgLen;
-	uint64_t a, b;
 
 	a5hash_umul128( Seed2 ^ ( UseSeed & val10 ),
 		Seed1 ^ ( UseSeed & val01 ), &Seed1, &Seed2 );
@@ -365,20 +365,17 @@ A5HASH_INLINE_F uint64_t a5hash( const void* const Msg0, size_t MsgLen,
 
 	if( MsgLen < 4 )
 	{
-		a = 0;
-		b = 0;
-
 		if( MsgLen != 0 )
 		{
-			a = Msg[ 0 ];
+			Seed1 ^= Msg[ 0 ];
 
 			if( MsgLen != 1 )
 			{
-				a |= (uint64_t) Msg[ 1 ] << 8;
+				Seed1 ^= (uint64_t) Msg[ 1 ] << 8;
 
 				if( MsgLen != 2 )
 				{
-					a |= (uint64_t) Msg[ 2 ] << 16;
+					Seed1 ^= (uint64_t) Msg[ 2 ] << 16;
 				}
 			}
 		}
@@ -388,26 +385,26 @@ A5HASH_INLINE_F uint64_t a5hash( const void* const Msg0, size_t MsgLen,
 		const uint8_t* const Msg4 = Msg + MsgLen - 4;
 		const size_t mo = MsgLen >> 3;
 
-		a = (uint64_t) a5hash_lu32( Msg ) << 32 | a5hash_lu32( Msg4 );
+		Seed1 ^= (uint64_t) a5hash_lu32( Msg ) << 32 | a5hash_lu32( Msg4 );
 
-		b = (uint64_t) a5hash_lu32( Msg + mo * 4 ) << 32 |
+		Seed2 ^= (uint64_t) a5hash_lu32( Msg + mo * 4 ) << 32 |
 			a5hash_lu32( Msg4 - mo * 4 );
 	}
 
-	a5hash_umul128( a ^ Seed1, b ^ Seed2, &Seed1, &Seed2 );
+	a5hash_umul128( Seed1, Seed2, &Seed1, &Seed2 );
 
-	a5hash_umul128( val01 ^ Seed1, Seed2, &a, &b );
+	a5hash_umul128( val01 ^ Seed1, Seed2, &Seed1, &Seed2 );
 
-	return( a ^ b );
+	return( Seed1 ^ Seed2 );
 }
 
 /**
- * @brief 32-bit by 32-bit unsigned multiplication with 64-bit result.
+ * @brief 32-bit by 32-bit unsigned multiplication producing a 64-bit result.
  *
  * @param u Multiplier 1.
  * @param v Multiplier 2.
  * @param[out] rl The lower half of the 64-bit result.
- * @param[out] rh The higher half of the 64-bit result.
+ * @param[out] rh The upper half of the 64-bit result.
  */
 
 A5HASH_INLINE_F void a5hash_umul64( const uint32_t u, const uint32_t v,
@@ -426,14 +423,14 @@ A5HASH_INLINE_F void a5hash_umul64( const uint32_t u, const uint32_t v,
  * string, or binary data block. Designed for string/small key data hash-map
  * and hash-table uses.
  *
- * This function works on 32-bit platforms natively, and is not subject to
- * 64-bit arithmetic penalty of the a5hash() function.
+ * This function works natively on 32-bit platforms and avoids the performance
+ * penalty of 64-bit arithmetic.
  *
  * @param Msg0 The message to produce a hash from. The alignment of this
  * pointer is unimportant. It is valid to pass 0 when `MsgLen` equals 0.
- * @param MsgLen Message's length, in bytes, can be zero.
- * @param UseSeed Optional 32-bit value, to use instead of the default seed
- * (0). This value can have any number of significant bits and any statistical
+ * @param MsgLen Message length, in bytes, can be zero.
+ * @param UseSeed An optional value to use instead of the default seed (0).
+ * This value can have any number of significant bits and any statistical
  * quality.
  * @return 32-bit hash of the input data.
  */
@@ -571,10 +568,11 @@ _fin:
  *
  * @param Msg0 The message to produce a hash from. The alignment of this
  * pointer is unimportant. It is valid to pass 0 when `MsgLen` equals 0.
- * @param MsgLen Message's length, in bytes, can be zero.
- * @param UseSeed Optional value, to use instead of the default seed (0). This
- * value can have any number of significant bits and any statistical quality.
- * @param[out] rh Pointer to 64-bit variable that receives higher 64 bits of
+ * @param MsgLen Message length, in bytes, can be zero.
+ * @param UseSeed An optional value to use instead of the default seed (0).
+ * This value can have any number of significant bits and any statistical
+ * quality.
+ * @param[out] rh Pointer to 64-bit variable that receives upper 64 bits of
  * 128-bit hash. The alignment of this pointer is unimportant. Can be 0.
  * @return Lower 64 bits of 128-bit hash of the input data.
  */
@@ -781,22 +779,22 @@ A5HASH_INLINE uint64_t a5hash128( const void* const Msg0, size_t MsgLen,
 /**
  * @brief A5RAND 64-bit pseudo-random number generator.
  *
- * Simple, reliable, self-starting yet efficient PRNG, with 2^64 period.
- * 0.50 cycles/byte performance. Self-starts in 4 iterations, which is a
- * suggested "warm up" before using its output, if seeds were initialized with
- * arbitrary values.
+ * A simple, reliable, self-starting, yet efficient PRNG with a 2^64 period.
+ * 0.50 cycles/byte performance. It self-starts in 4 iterations, which is the
+ * suggested "warm-up" period before using its output when seeds are
+ * initialized with arbitrary values.
  *
  * The `Seed1` and `Seed2` variables can be independently initialized with two
- * high-quality uniformly-random values (e.g., from operating system's
- * entropy, or a hash function's outputs). Such initialization reduces the
- * number of "warm up" iterations - that way the PRNG output will be valid
- * from the let go.
+ * high-quality, uniformly random values (e.g., from the operating system's
+ * entropy or a hash function's outputs). Such initialization reduces the
+ * number of "warm-up" iterations required, making the PRNG output valid
+ * from the start.
  *
  * @param[in,out] Seed1 Seed value 1. Can be initialized to any value
- * (even 0). Should not be used as PRNG value.
+ * (even 0). Should not be used as the PRNG value.
  * @param[in,out] Seed2 Seed value 2. In the simplest case, can be initialized
- * to the same value as `Seed1`. Should not be used as PRNG value.
- * @return The next uniformly-random 64-bit value.
+ * to the same value as `Seed1`. Should not be used as the PRNG value.
+ * @return The next uniformly random 64-bit value.
  */
 
 A5HASH_INLINE_F uint64_t a5rand( uint64_t* const Seed1,
