@@ -231,9 +231,9 @@ loop:
 
 out = a5rand( &Seed1, &Seed2 );
 ent = Ctr ^ Ctr << 15 ^ Ctr << 31 ^ Ctr << 47;
+Ctr++;
 Seed1 ^= ent;
 Seed2 ^= ent;
-Ctr++;
 ```
 
 Secondly, and this is important for the hash function's structure, successive
@@ -243,7 +243,7 @@ iteration (actually, a few), without requiring the addition of `val01` and
 
 However, this does not touch the statistics of internal state variables.
 Admittedly, they cannot be used directly as high-quality uniformly random
-values. But in the context of the "blinding multiplication" claim, the
+values. But in the context of the "blinding multiplication" claim below, the
 following code is sufficient evidence of absence of bias in the hash
 function's state:
 
@@ -281,14 +281,15 @@ int main(void)
 }
 ```
 
-As expected, this code detects about 8\*2<sup>12</sup> matches. Admittedly,
-by itself this is not an overall strong proof for the hash function's state
-uniformity. But it is adequate for the resistance against the "blinding
-multiplication" occurring at least in the initial step. This test also
-demonstrates that the `a5rand()` construct maintains unbiased state and
-collision statistics similar to that of uniform distribution, continuously.
-This test can be repeated with various initial states yielding the same
-statistics.
+As expected, this code detects about 8\*2<sup>12</sup> matches (the `ent` is
+not added to the seeds here, but its addition decreases collisions due to
+auto-correlation effects). Admittedly, by itself this is not an overall strong
+evidence for the hash function's state uniformity. But it is adequate for the
+resistance against the "blinding multiplication" occurring at some step.
+This test demonstrates that the `a5rand()` construct maintains unbiased state
+and collision statistics similar to that of uniform distribution,
+continuously. This test can be repeated with various initial states yielding
+the same statistics.
 
 ## Blinding Multiplication
 
