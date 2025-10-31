@@ -341,49 +341,46 @@ The constants `0xAAAA...` and `0x5555...` used in `a5hash` and `a5rand`
 represent repetitions of `10` and `01` bit-pairs. While they do not look
 special as adders in PRNGs, or even look controversial due to absence of
 spectral information, they have the important property of substantially
-reducing biases of any number.
+reducing internal biases of any number.
 
-Consider this code, which calculates sum of successive bit independences of a
-set of numbers, and same of numbers XORed with `0xAAAA` constant, if a
-number's bit independence is low:
+Consider this code, which calculates sum of internal successive bit
+independences of a set of numbers, and same of numbers XORed and summed
+with the `0xAAAA` constant, if a number's bit independence is low:
 
 ```c
-#include <stdint.h>
 #include <stdio.h>
+
+int count_indep( int v )
+{
+    int c = 0;
+    for( int i = 0; i < 14; i++ )
+    {
+        c += __popcnt(( v ^ v << ( i + 1 )) >> i );
+    }
+    return( c );
+}
 
 int main(void)
 {
-    int c1[ 6 ] = { 0 };
-    int c2[ 6 ] = { 0 };
+    int c1 = 0, c2 = 0, c3 = 0;
     for( int i = 0; i < ( 1 << 16 ); i++ )
     {
-        for( int j = 0; j < 6; j++ )
+        int c = count_indep( i );
+        if( c < 70 )
         {
-            int c = __popcnt(( i ^ ( i << ( 1 + j ))) >> j );
-            if( c < 8 - j )
-            {
-                int i2 = i ^ 0xAAAA;
-                c1[ j ] += c;
-                c2[ j ] += __popcnt(( i2 ^ ( i2 << ( 1 + j ))) >> j );
-            }
+            c1 += c;
+            c2 += count_indep( i ^ 0xAAAA );
+            c3 += count_indep( i + 0xAAAA );
         }
     }
-    for( int j = 0; j < 6; j++ )
-    {
-        printf( "%i %i\n", c1[ j ], c2[ j ]);
-    }
+    printf( "%i %i %i\n", c1, c2, c3 );
 }
 ```
 
 Output:
 
 ```
-84048 164128
-58344 66338
-21331 54049
-5824 8607
-1273 5533
-202 574
+55106 115862 123898
 ```
 
 ## Thanks
