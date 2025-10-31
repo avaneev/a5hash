@@ -341,7 +341,7 @@ The constants `0xAAAA...` and `0x5555...` used in `a5hash` and `a5rand`
 represent repetitions of `10` and `01` bit-pairs. While they do not look
 special as adders in PRNGs, or even look controversial due to absence of
 spectral information, they have the important property of substantially
-restoring biases of any number.
+reducing biases of any number.
 
 Consider this code, which calculates sum of successive bit independences of a
 set of numbers, and same of numbers XORed with `0xAAAA` constant, if a
