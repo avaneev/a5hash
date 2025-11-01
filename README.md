@@ -386,10 +386,10 @@ Output:
 
 ## Thanks
 
-While the intent was preeminently aggressive, the author acknowledges
-[Alisa Sireneva](https://github.com/purplesyringa) for discovering a potential
-issue in the original `a5hash v1`. This issue, which required inputs longer
-than 1000 bytes, was fully resolved in `a5hash v5`.
+The author acknowledges [Alisa Sireneva](https://github.com/purplesyringa),
+although their rhetoric was preeminently aggressive, for discovering a
+potential issue in the original `a5hash v1`. This issue, which required inputs
+longer than 1000 bytes, was fully resolved in `a5hash v5`.
 
 Thanks to Frank J. T. Wojcik and prior authors for
 [SMHasher3](https://gitlab.com/fwojcik/smhasher3).
