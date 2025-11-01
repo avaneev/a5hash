@@ -255,25 +255,31 @@ int main(void)
 {
     uint64_t Seed1 = 0, Seed2 = 0, ent, Ctr = 0;
     int c = 0;
-    int i;
+    int j, i;
 
-    for( i = 0; i < ( 1 << 28 ); i++ )
+    for( j = 0; j < ( 1 << 8 ); j++ )
     {
-        a5rand( &Seed1, &Seed2 );
-
-        ent = Ctr ^ Ctr << 15 ^ Ctr << 31 ^ Ctr << 47;
-        Ctr++;
-
-        if(( Seed1 & 0xFFFF ) == ( ent & 0xFFFF ) ||
-            ( Seed1 & 0xFFFF0000 ) == ( ent & 0xFFFF0000 ) ||
-            ( Seed1 & 0xFFFF00000000 ) == ( ent & 0xFFFF00000000 ) ||
-            ( Seed1 & 0xFFFF000000000000 ) == ( ent & 0xFFFF000000000000 ) ||
-            ( Seed2 & 0xFFFF ) == ( ent & 0xFFFF ) ||
-            ( Seed2 & 0xFFFF0000 ) == ( ent & 0xFFFF0000 ) ||
-            ( Seed2 & 0xFFFF00000000 ) == ( ent & 0xFFFF00000000 ) ||
-            ( Seed2 & 0xFFFF000000000000 ) == ( ent & 0xFFFF000000000000 ))
+        Seed1 = a5rand( &Seed1, &Seed2 );
+        Seed2 = a5rand( &Seed1, &Seed2 );
+        
+        for( i = 0; i < ( 1 << 20 ); i++ )
         {
-            c++;
+            a5rand( &Seed1, &Seed2 );
+
+            ent = Ctr ^ Ctr << 15 ^ Ctr << 31 ^ Ctr << 47;
+            Ctr++;
+
+            if(( Seed1 & 0xFFFF ) == ( ent & 0xFFFF ) ||
+                ( Seed1 & 0xFFFF0000 ) == ( ent & 0xFFFF0000 ) ||
+                ( Seed1 & 0xFFFF00000000 ) == ( ent & 0xFFFF00000000 ) ||
+                ( Seed1 & 0xFFFF000000000000 ) == ( ent & 0xFFFF000000000000 ) ||
+                ( Seed2 & 0xFFFF ) == ( ent & 0xFFFF ) ||
+                ( Seed2 & 0xFFFF0000 ) == ( ent & 0xFFFF0000 ) ||
+                ( Seed2 & 0xFFFF00000000 ) == ( ent & 0xFFFF00000000 ) ||
+                ( Seed2 & 0xFFFF000000000000 ) == ( ent & 0xFFFF000000000000 ))
+            {
+                c++;
+            }
         }
     }
 
@@ -286,10 +292,10 @@ not added to the seeds here, but its addition decreases collisions due to
 auto-correlation effects). Admittedly, by itself this is not an overall strong
 evidence for the hash function's state uniformity. But it is adequate for the
 resistance against the "blinding multiplication" occurring at some step.
-This test demonstrates that the `a5rand()` construct maintains unbiased state
-and collision statistics similar to that of uniform distribution,
-continuously. This test can be repeated with various initial states yielding
-the same statistics.
+
+This test demonstrates that the `a5rand()` construct maintains approximately
+unbiased state and collision statistics close to that of uniform distribution,
+continuously, and for any initial seed.
 
 ## Blinding Multiplication
 
