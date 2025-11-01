@@ -295,7 +295,9 @@ resistance against the "blinding multiplication" occurring at some step.
 
 This test demonstrates that the `a5rand()` construct maintains approximately
 unbiased state and collision statistics close to that of uniform distribution,
-continuously, and for any initial seed.
+continuously, and for any initial seed. Additionally, the state variables
+follow same multi-lag auto-correlation statistics as uniformly-random numbers
+(see the `count_indep()` function below).
 
 ## Blinding Multiplication
 
@@ -362,7 +364,7 @@ int count_indep( int v )
     int c = 0;
     for( int i = 0; i < 14; i++ )
     {
-        c += __popcnt(( v ^ v << ( i + 1 )) >> i );
+        c += __builtin_popcount(( v ^ v << ( i + 1 )) >> i );
     }
     return( c );
 }
