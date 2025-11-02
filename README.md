@@ -363,6 +363,10 @@ To sum up, `a5hash` is practically resistant to blinding multiplication in
 the general case, when hash function's `UseSeed` is unknown and hash
 function's output is not exposed.
 
+This conclusion applies only to hash functions that use a 64-bit seed.
+The 32-bit `a5hash32()` function should not be used in open systems due to
+security concerns.
+
 ## Why A5?
 
 The constants `0xAAAA...` and `0x5555...` used in `a5hash` and `a5rand`
