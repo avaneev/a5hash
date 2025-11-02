@@ -296,10 +296,10 @@ resistance against the "blinding multiplication" occurring at some step.
 This test demonstrates that the `a5rand()` construct maintains approximately
 unbiased state and collision statistics close to that of uniform distribution,
 continuously, and for any initial seed. Additionally, the state variables
-follow same multi-lag auto-correlation statistics as uniformly-random numbers
+follow same multi-lag auto-correlation statistics as uniformly random numbers
 (see the `count_indep()` function below).
 
-## Uniformity Margin
+## State Uniformity Margin
 
 Although the state variables are approximately uniform, a bit independence
 test between the randomly chosen `UseSeed` and subsequent `Seed1` and `Seed2`
