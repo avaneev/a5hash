@@ -299,15 +299,23 @@ continuously, and for any initial seed. Additionally, the state variables
 follow same multi-lag auto-correlation statistics as uniformly-random numbers
 (see the `count_indep()` function below).
 
+## Uniformity Margin
+
 Although the state variables are approximately uniform, a bit independence
-test between the input `UseSeed` and subsequent `Seed1` and `Seed2` (after
-multiplication) reveals that up to 6 bits of either state variable can be
-predicted by the `UseSeed`, though not simultaneously. At the same time,
+test between the randomly chosen `UseSeed` and subsequent `Seed1` and `Seed2`
+(after multiplication) reveals that up to 6 bits of either state variable can
+be predicted by the `UseSeed`, though not simultaneously. At the same time,
 a differential analysis indicates that average bit difference (avalanche)
 between the `UseSeed`-`Seed1` and `UseSeed`-`Seed2` pairs is 50.0%. However,
 since the `UseSeed` is unknown, this imperfect bit independence only reveals
 an imperfect dispersion from the multiplication of independent variables,
 which is to be expected.
+
+A perfect correlation was identified in the 63rd bit of `Seed1` and `Seed2`
+after the initial multiplication, related to the hash function's constants,
+which reduces their effective entropy by one bit. While the significance of
+correlations in other bits is debatable, accounting for them would reduce the
+entropy by no more than an additional 3 bits.
 
 ## Blinding Multiplication
 
@@ -337,9 +345,10 @@ hash value with poor avalanche properties.
 However, one should consider the probability of BM happening on practical
 inputs, in the context of brute-force attack that continuously scans a set of
 inputs, not knowing a fixed seed. `a5hash` state (`Seed1` and `Seed2`) is
-unbiased and meets usual random collision statistics at all times, which means
-BM is triggered with a theoretical probability of 2<sup>-64</sup> for a 64-bit
-seed: this can be considered negligible for non-cryptographic use cases.
+unbiased and meets usual random collision statistics at all times, with 1-bit
+margin, which means BM is triggered with a theoretical probability of
+2<sup>-63</sup> for a 64-bit seed: this can be considered negligible for
+non-cryptographic use cases.
 
 When the `UseSeed` is unknown, and when the output of the hash function is
 unknown (as in the case of server-side structures), it is impossible for an
