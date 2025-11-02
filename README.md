@@ -7,7 +7,7 @@ The `a5hash()` function available in the `a5hash.h` file implements a fast
 use cases. The function's code is portable, cross-platform, scalar,
 zero-allocation, header-only, inlinable C (compatible with C++). The provided
 64-bit and 128-bit hash functions of the `a5hash` family are compatible with
-32-bit platforms, but their use there is not recommended due to reduced
+32-bit platforms, but their use there is not recommended due to a reduced
 performance. On 32-bit platforms it is recommended to use the available
 `a5hash32()` function which provides a native 32-bit compatibility, if 32-bit
 hash values are sufficient.
@@ -50,7 +50,7 @@ multiplication is used directly as input on the next iteration. It appears
 unlikely that mathematics offers a simpler way to perform high-quality hashing
 (in the `SMHasher` sense) than this. Such conclusion stems from the fact that
 the hash function is structurally simple and a further reduction of the number
-of operations seems impossible while other existing similarly simple
+of operations seems impossible, while other existing similarly simple
 constructs like `xorshift` do not provide high-quality hashing.
 
 This function passes all [SMHasher](https://github.com/rurban/smhasher) and
@@ -120,7 +120,7 @@ The benchmark was performed using [SMHasher3](https://gitlab.com/fwojcik/smhashe
 on a Xeon E-2386G (RocketLake) running AlmaLinux 9.3. This benchmark includes
 only the fastest hash functions that pass all state-of-the-art tests.
 `XXH3-64` here does not, but it is too popular to exclude it. `rapidhash` is a
-replacement to `wyhash`.
+replacement for `wyhash`.
 
 Small key speed values are in cycles per hash, while other values are in
 cycles per operation. `std init` and `std run` are `std::unordered_map` init
@@ -241,10 +241,10 @@ multiplications maintain uniformity of random output for at least one
 iteration (actually, a few), without requiring the addition of `val01` and
 `val10` constants to the state variables.
 
-However, this does not touch the statistics of internal state variables.
+However, this does not touch on the statistics of internal state variables.
 Admittedly, they cannot be used directly as high-quality uniformly random
 values. But in the context of the "blinding multiplication" claim below, the
-following code is sufficient evidence of absence of bias in the hash
+following code is sufficient evidence of the absence of bias in the hash
 function's state:
 
 ```c
@@ -299,11 +299,21 @@ continuously, and for any initial seed. Additionally, the state variables
 follow same multi-lag auto-correlation statistics as uniformly-random numbers
 (see the `count_indep()` function below).
 
+Although the state variables are approximately uniform, a bit independence
+test between the input `UseSeed` and subsequent `Seed1` and `Seed2` (after
+multiplication) reveals that up to 6 bits of either state variable can be
+predicted by the `UseSeed`, though not simultaneously. At the same time,
+a differential analysis indicates that average bit difference (avalanche)
+between the `UseSeed`-`Seed1` and `UseSeed`-`Seed2` pairs is 50.0%. However,
+since the `UseSeed` is unknown, this imperfect bit independence only reveals
+an imperfect dispersion from the multiplication of independent variables,
+which is to be expected.
+
 ## Blinding Multiplication
 
 "Blinding multiplication" (BM) is a common issue in almost all fast hash
 functions based on NxN bit multiplication involving 2\*N bit input per
-iteration. BM happens when one of the input values coincides with hash
+iteration. BM happens when one of the input values coincides with the hash
 function's current state or constants, and yields a zero result. While each
 such hash function tries to handle BM, in general it is impossible to
 completely "fix" BM without reducing hash function's performance.
@@ -352,9 +362,9 @@ special as adders in PRNGs, or even look controversial due to absence of
 spectral information, they have the important property of substantially
 reducing internal biases of any number.
 
-Consider this code, which calculates sum of internal successive bit
-independences of a set of numbers, and same of numbers XORed and summed
-with the `0xAAAA` constant, if a number's bit independence is low:
+Consider this code, which calculates the sum of internal successive bit
+independence estimates of a set of numbers, and same of numbers XORed and
+summed with the `0xAAAA` constant, if a number's bit independence is low:
 
 ```c
 #include <stdio.h>
