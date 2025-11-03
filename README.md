@@ -349,8 +349,9 @@ inputs, in the context of a brute-force attack that continuously scans a set
 of inputs, not knowing a fixed seed. `a5hash` state (`Seed1` and `Seed2`) is
 unbiased and meets usual random collision statistics at all times, with a
 1-bit margin (see the "State Uniformity Margin" chapter), which means BM is
-triggered with a theoretical probability of 2<sup>-63</sup> for a 64-bit seed:
-this can be considered negligible for non-cryptographic use cases.
+triggered with a theoretical probability of 2<sup>-63</sup> to 2<sup>-60</sup>
+for a 64-bit seed: this can be considered negligible for non-cryptographic use
+cases, with the additional complexity outlined below.
 
 When the `UseSeed` is unknown, and when the output of the hash function is
 unknown (as in the case of server-side structures), it is impossible for an
