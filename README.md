@@ -342,7 +342,7 @@ half of 2\*N bit input completely, potentially leading to collisions. The
 another issue: combining inputs on adjacent iterations without transformation,
 which also yields collisions, but in a veiled manner. Also, if BM happens at
 the last input, this input is passed to the final `rapid_mix` call, yielding a
-hash value with poor avalanche properties.
+hash value with poor uniformity.
 
 However, one should consider the probability of BM happening on practical
 inputs, in the context of a brute-force attack that continuously scans a set
