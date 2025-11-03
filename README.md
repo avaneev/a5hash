@@ -8,50 +8,52 @@ use cases. The function's code is portable, cross-platform, scalar,
 zero-allocation, header-only, inlinable C (compatible with C++). The provided
 64-bit and 128-bit hash functions of the `a5hash` family are compatible with
 32-bit platforms, but their use there is not recommended due to reduced
-performance. On 32-bit platforms it is recommended to use the available
-`a5hash32()` function which provides native 32-bit compatibility, if 32-bit
-hash values are sufficient.
+performance of a 64-bit multiplication. On 32-bit platforms it is recommended
+to use the available `a5hash32()` function which provides native 32-bit
+compatibility, if 32-bit hash values are sufficient.
 
 The `a5hash()` function achieves very high hashing throughput for small
 strings/messages (about 11 cycles/hash for 0-64-byte strings, hashed
-repeatedly on Zen5). The bulk throughput is, however, only moderately fast
+repeatedly on Zen 5). The bulk throughput is, however, only moderately fast
 (15 GB/s on Ryzen 9950X), and that is intentional. Most recent competing
 "fast" hash functions aim to perform well both for common keyed string
 hash-maps and large data hashing. In most cases, this is done for the sake of
-better benchmark results, even though such hash functions rarely offer the
+better benchmark results, even though such hash functions rarely provide the
 streamed hashing required for large data or file hashing...
 
 `a5hash()` was designed to be ultimately fast only for common string and
-small key hash-maps and hash-tables, by utilizing the "forced inlining"
-feature present in most modern C/C++ compilers: this is easily achievable
-because, in compiled binary form, `a5hash()` is very small - about 300 bytes
+small-key hash-maps, and hash-tables, by utilizing the "forced inlining"
+feature present in most modern C and C++ compilers: this is easily achievable,
+since in compiled binary form, `a5hash()` is very small - about 300 bytes
 on x86-64 and arm64. Moreover, if the default seed (0) is used, or if data of
-compile-time constant size is hashed, it further reduces the code size and
-increases hashing throughput.
+compile-time constant size is hashed, these conditions further reduce the code
+size and increase the hashing throughput.
 
-Note that this function is not cryptographically secure: in open systems and
-in server-side internal structures, it should only be used with a secret seed,
-to minimize the chance of a successful collision attack (hash flooding).
-If occasional "blinding multiplication" occurs, all `a5hash` hash functions
-immediately recover from the zeroed-out state (see below).
+Note that this function is not cryptographically secure. To minimize the risk
+of a successful collision attack (hash flooding) in open systems and in
+server-side internal structures, it should only be used with a secret seed,
+and its output should not be exposed. However, if "blinding multiplication"
+occurs at a random iteration, all `a5hash` hash functions immediately recover
+from the zeroed-out state (see below).
 
 `a5hash` hash functions produce different hashes on big- and little-endian
 systems. This was a deliberate design choice to narrow down the scope of use
-cases to run-time hashing and embedded storage, as the endianness correction
-usually imposes a 20% performance penalty. If you need a reliable and fast
-hash function for files, with portable hashes, [komihash](https://github.com/avaneev/komihash)
+cases to run-time hashing and embedded storage, as endianness correction
+usually imposes a significant performance penalty. If you need a reliable and
+fast hash function for files, with portable hashes, [komihash](https://github.com/avaneev/komihash)
 is a great choice.
 
-Overall, `a5hash` achieves three goals: ultimate speed at run-time hashing,
-very small code size, and the use of a novel mathematical construct. Compared
-to most, if not all, existing hash functions, `a5hash` hash functions do not
-use accumulators nor folding of state variables: the full 128-bit result of
-multiplication is used directly as input on the next iteration. It appears
-unlikely that mathematics offers a simpler way to perform high-quality hashing
-(in the `SMHasher` sense) than this. Such a conclusion stems from the fact
-that the hash function is structurally simple and a further reduction of the
-number of operations seems impossible, while other existing similarly simple
-constructs like `xorshift` do not provide high-quality hashing.
+Overall, `a5hash` achieves three goals: attains an ultimate speed for run-time
+hashing, has very small code size, and uses a novel mathematical construct.
+Compared to most, if not all, existing hash functions, `a5hash` hash functions
+do not use explicit accumulators or folding of state variables: the full
+128-bit result of multiplication is used directly as input on the next
+iteration. It appears unlikely that mathematics offers a simpler way to
+perform high-quality hashing (in the `SMHasher` testing sense) than this.
+Such a conclusion stems from the fact that the `a5hash()` function is
+structurally simple, and further reduction of the number of operations seems
+impossible, while other existing similarly simple constructs like `xorshift`
+do not provide high-quality hashing.
 
 `a5hash` hash functions pass all [SMHasher](https://github.com/rurban/smhasher)
 and [SMHasher3](https://gitlab.com/fwojcik/smhasher3/-/tree/main/results?ref_type=heads)
@@ -62,10 +64,10 @@ expectations.
 
 These functions and the source code (which conforms to
 [ISO C99](https://en.wikipedia.org/wiki/C99)) were quality-tested on:
-Clang, GCC, MSVC, Intel C++ compilers; x86, x86-64 (Intel, AMD), AArch64
-(Apple Silicon) architectures; Windows 11, AlmaLinux 9.3, macOS 15.3.2.
-Full C++ compliance is enabled conditionally and automatically when the
-source code is compiled with a C++ compiler.
+Clang, GCC, MSVC, and Intel C++ compilers; x86, x86-64 (Intel, AMD), and
+AArch64 (Apple Silicon) architectures; Windows 11, AlmaLinux 9.3, and macOS
+15.3.2. Full C++ compliance is enabled conditionally and automatically when
+the source code is compiled with a C++ compiler.
 
 ## Usage
 
@@ -91,7 +93,7 @@ general-purpose inline function which implements a portable unsigned 64x64 to
 
 The `a5hash128()` function produces 128-bit hashes, and, compared to 64-bit
 `a5hash()` function, features significant performance for large data hashing -
-50 GB/s on Ryzen 9950X. It is also fairly fast for hash-map use cases, but
+50 GB/s on Ryzen 9950X. It is also fairly fast for use in hash-maps, but
 a bit slower than the `a5hash()` function. Among 128-bit hashes that pass the
 state-of-the-art tests, it's likely the fastest 128-bit hash function for
 hash-maps.
@@ -122,12 +124,12 @@ only the fastest hash functions that pass all state-of-the-art tests.
 `XXH3-64` here does not, but it is too popular to exclude it. `rapidhash` is a
 replacement for `wyhash`.
 
-Small key speed values are in cycles per hash, while other values are in
+Small-key speed values are in cycles per hash, while other values are in
 cycles per operation. `std init` and `std run` are `std::unordered_map` init
 and running tests, `par init` and `par run` are `greg7mdp/parallel-hashmap`
 init and running tests. All values are averages over 10 runs.
 
-|Hash function|Small key speed|std init|std run|par init|par run|
+|Hash function|Small-key speed|std init|std run|par init|par run|
 |----         |----           |----    |----   |----    |----   |
 |a5hash       |**17.20**      |**523** |**404**|294     |**277**|
 |rapidhash    |18.10          |526     |430    |308     |292    |
@@ -138,8 +140,8 @@ init and running tests. All values are averages over 10 runs.
 
 ## Customizing C++ namespace
 
-If in a C++ environment it is undesirable to export `a5hash` symbols into the
-global namespace, the `A5HASH_NS_CUSTOM` macro can be defined externally:
+In C++ environments where it is undesirable to export `a5hash` symbols into
+the global namespace, the `A5HASH_NS_CUSTOM` macro can be defined externally:
 
 ```c++
 #define A5HASH_NS_CUSTOM a5hash
@@ -155,17 +157,17 @@ Similarly, `a5hash` symbols can be placed into any other custom namespace
 ```
 
 This way, `a5hash` functions can be referenced like `my_hashes::a5hash(...)`.
-Note that since all `a5hash` functions have a `static inline` specifier, there
-can be no ABI conflicts, even if the `a5hash.h` header is included in
+Note that since all `a5hash` functions have the `static inline` specifier,
+there can be no ABI conflicts, even if the `a5hash.h` header is included in
 unrelated, mixed C/C++, compilation units.
 
 ## A5RAND
 
 The `a5rand()` function available in the `a5hash.h` file implements a
 simple, but reliable, self-starting, and fast (`0.50` cycles/byte) 64-bit
-pseudo-random number generator (PRNG) with `2^64` period. It is based on the
+pseudo-random number generator (PRNG) with a `2^64` period. It is based on the
 same mathematical construct as the `a5hash()` hash function. `a5rand()` passes
-`PractRand` tests (at least up to 1 TB length at default settings).
+`PractRand` tests (at least up to 1 TB length, at the default settings).
 
 ```c
 #include <stdio.h>
@@ -196,17 +198,74 @@ f7a47a8942e378b5
 aea26585979bf755
 ```
 
+## Why A5?
+
+The constants `0xAAAA...` and `0x5555...` used in `a5hash()` and `a5rand()`
+represent repetitions of `10` and `01` bit-pairs. While they do not look
+special as adders in PRNGs, or even look controversial due to absence of
+bit-wise spectral information, they have the important property of
+substantially reducing internal biases of any given number.
+
+Consider this code, which calculates the sum of internal successive bit
+independence estimates of a set of numbers, and the same for set's numbers
+XORed and summed with the `0xAAAA` constant, if a set number's bit
+independence is low. The output shows that the estimates are higher for
+numbers that have been XORed or added with the constant. Other statistically
+uniform constants also increase the estimates, although to a lesser extent.
+
+This is an empirical quantification for why both `a5hash()` and `a5rand()`
+generate high-quality random numbers, even though they are based on
+multiplication, which has an imperfect dispersion.
+
+```c
+#include <stdio.h>
+
+int count_indep( int v )
+{
+    int c = 0;
+    for( int i = 0; i < 14; i++ )
+    {
+        c += __builtin_popcount(( v ^ v << ( i + 1 )) >> ( i + 1 ));
+    }
+    return( c );
+}
+
+int main(void)
+{
+    int c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0;
+    for( int i = 0; i < ( 1 << 16 ); i++ )
+    {
+        int c = count_indep( i );
+        if( c < 70 )
+        {
+            c1 += c;
+            c2 += count_indep( i ^ 0xAAAA );
+            c3 += count_indep( i + 0xAAAA );
+            c4 += count_indep( i ^ 0x6A88 );
+            c5 += count_indep( i + 0x6A88 );
+        }
+    }
+    printf( "%i %i %i %i %i\n", c1, c2, c3, c4, c5 );
+}
+```
+
+Output:
+
+```
+76090 149759 160004 145679 155002
+```
+
 ## Uniformity Analysis
 
 At the time when this hash function was developed empirically, cryptography
-has no precise and straightforward techniques for differential cryptanalysis
+had no precise and straightforward techniques for differential cryptanalysis
 of the multiplication of large independent variables. This fact complicates
-formally proving the uniformity of the hash function's output and state.
+a formal proof that the hash function's output and state are uniform.
 
 During the era when many classical hash functions were designed, the most
 advanced attack method was differential cryptanalysis. While powerful against
 substitution-permutation networks (like in block ciphers), it is difficult to
-apply to multiplication of two independent variable inputs. Predicting
+apply to multiplication of two independent variables as inputs. Predicting
 the differential propagation (i.e., how a difference in the input affects the
 difference in the output) through a multiplication gate is very complex.
 The carry propagation affects many bits in an unpredictable way.
@@ -219,8 +278,8 @@ available.
 At the same time, the empirical evidence is usually sufficient for
 non-cryptographic contexts, even though it does not constitute hard proof.
 The following example provides evidence that the `a5hash()` function -
-specifically, its core operation, the `a5rand()` function - practically
-retains a uniformly random output on every iteration. In this example,
+specifically, its core operation, the `a5rand()` function - retains
+practically a uniformly random output on every iteration. In this example,
 the `out` value is provided to and analyzed by `PractRand`, which passes
 statistical tests for uniform randomness. Here, the `ent` value acts as an
 input message with a sparse structure.
@@ -237,16 +296,16 @@ Seed1 ^= ent;
 Seed2 ^= ent;
 ```
 
-Secondly, and this is important for the hash function's structure, successive
-multiplications maintain uniformity of random output for at least one
-iteration (actually, a few), without requiring the addition of `val01` and
-`val10` constants to the state variables.
+Secondly, and this is important for the hash function's initial iteration,
+successive multiplications maintain uniformity of random output for at least
+one iteration, and typically a few more, without requiring the addition of
+`val01` and `val10` constants to the state variables.
 
 However, this does not touch on the statistics of internal state variables.
-Admittedly, they cannot be used directly as high-quality uniformly random
-values. But in the context of the "blinding multiplication" claim below, the
-following code is sufficient evidence of the absence of bias in the hash
-function's state:
+It should be noted that they cannot be used directly as high-quality uniformly
+random values. But in the context of the "blinding multiplication" claim
+below, the following code is sufficient evidence of the absence of bias in the
+hash function's state:
 
 ```c
 #include <stdio.h>
@@ -288,151 +347,109 @@ int main(void)
 }
 ```
 
-As expected, this code detects about 8\*2<sup>12</sup> matches (the `ent` is
-not added to the seeds here, but its addition decreases collisions due to
-auto-correlation effects). Admittedly, by itself this is not an overall strong
-evidence for the hash function's state uniformity. But it is adequate for the
-resistance against the "blinding multiplication" occurring at some step.
+As expected, this code detects about 8\*2^12 matches (the `ent` is not added
+to the seeds here, but its addition decreases collisions due to
+auto-correlation effects). Admittedly, by itself this is not a strong evidence
+for the hash function state's uniformity. But it is adequate to demonstrate
+the resistance against the "blinding multiplication" occurring at some step.
 
-This test demonstrates that the `a5rand()` construct maintains approximately
-unbiased state and collision statistics close to those of uniform
-distribution, continuously, and for any initial seed. Additionally, the state
-variables follow the same multi-lag auto-correlation statistics as uniformly
-random numbers (see the `count_indep()` function below).
+This test demonstrates that the `a5rand()` construct continuously maintains an
+approximately unbiased state and collision statistics close to a uniform
+distribution, and for any initial seed. Additionally, the state variables
+follow the same multi-lag auto-correlation statistics as uniformly random
+numbers (see the `count_indep()` function above).
 
 ## State Uniformity Margin
 
-Although the state variables are approximately uniform, a bit independence
-test between the randomly chosen `UseSeed` and subsequent `Seed1` and `Seed2`
-(after multiplication) reveals that up to 6 bits of either state variable can
-be predicted by the `UseSeed`, though not simultaneously. At the same time,
-a differential analysis indicates that average bit difference (avalanche)
-between the `UseSeed`-`Seed1` and `UseSeed`-`Seed2` pairs is 50% +/- 0.3%.
-However, since the `UseSeed` is unknown, this imperfect bit independence only
-reveals an imperfect dispersion from the multiplication of independent
-variables, which is to be expected.
+Although the state variables are approximately uniform, a bit-independence
+test between the hash function's randomly chosen `UseSeed` parameter and the
+subsequent `Seed1` and `Seed2` (after multiplication) reveals that up to
+6 bits in either state variable can be predicted by the `UseSeed`. At the same
+time, a differential analysis indicates that the average bit difference
+(avalanche effect) between the `UseSeed`/`Seed1` and `UseSeed`/`Seed2` pairs
+is approximately 50% (+/- 0.3%). However, since the `UseSeed` is unknown, this
+imperfect bit independence only reveals an imperfect dispersion resulting from
+the multiplication of independent variables, which is to be expected.
 
-A perfect correlation was identified in the 63rd bit of `Seed1` and `Seed2`
-after the initial multiplication, related to the hash function's constants,
-which reduces their effective entropy by one bit. While the significance of
-correlations in other bits is debatable, accounting for them would reduce the
-entropy by no more than an additional 3 bits.
+Another observation, unrelated to the `UseSeed` biases, is a perfect
+correlation in the 63rd bits of both `Seed1` and `Seed2` after the initial
+multiplication. This correlation, which is related to the hash function's
+constants, reduces effective entropy of either state variable by 1 bit.
+While the significance of correlations in three other bits is debatable,
+accounting for them would reduce the entropy by only up to 3 bits.
 
 ## Blinding Multiplication
 
 "Blinding multiplication" (BM) is a common issue in almost all fast hash
 functions based on NxN bit multiplication involving 2\*N bit input per
-iteration. BM happens when one of the input values coincides (via XOR or
-addition) with a hash function's current state or constants, and yields a
-zero result. While each such hash function tries to handle BM, in general it
-is impossible to completely "fix" BM without reducing hash function's
-performance.
+iteration. BM happens during hashing iterations, when one of the input values
+coincides (via XOR or addition) with a hash function's current state or
+constants, and yields a zero result. While each such hash function tries to
+handle BM, in general it is impossible to completely "fix" BM without reducing
+a hash function's performance.
 
-While statistically speaking, a hash function's state may transiently become
-zero, and it is a probable outcome, this becomes problematic if the hash
-function can't recover from it rapidly, and retain the seeded state. `a5hash`
-instantly recovers from occasional BM via subsequent addition of `val01` and
-`val10` constants derived from the unknown initial seed, with its further
+Statistically speaking, a hash function's state may transiently become zero,
+and it is a probable outcome. However, this becomes problematic if the hash
+function can't recover from it rapidly and retain the seeded state. `a5hash`
+instantly recovers from occasional BM via the subsequent addition of `val01`
+and `val10` constants derived from the unknown initial seed, with its further
 state being similarly unknown. On the contrary, the "unprotected" `rapidhash`
-does not recover the seed - it becomes zero, and thus the state becomes known.
+does not recover the seed - it becomes zero, and thus the state becomes known
+(this and the next claim can be verified by carefully examining the
+`rapid_mum()` function in the context of the source code of `rapidhash`).
 
 Another issue is that NxN bit multiplication which yields zero, discards
 half of 2\*N bit input completely, potentially leading to collisions. The
-"protected" `rapidhash` tries to tackle this issue, but doing so, it creates
-another issue: combining inputs on adjacent iterations without transformation,
-which also yields collisions, but in a veiled manner. Also, if BM happens at
-the last input, this input is passed to the final `rapid_mix` call, yielding a
-hash value with poor uniformity.
+"protected" `rapidhash` tries to tackle this issue, but in doing so, it
+creates another issue: combining inputs on adjacent iterations without
+transformation, which also yields collisions, but in a veiled manner. Also,
+if BM happens at the last input, this input is passed to the final
+`rapid_mix()` call, yielding a hash value with poor uniformity.
 
-However, one should consider the probability of BM happening on practical
-inputs, in the context of a brute-force attack that continuously scans a set
-of inputs, not knowing a fixed seed. `a5hash` state (`Seed1` and `Seed2`) is
-unbiased and meets usual random collision statistics at all times, with a
-1-bit margin (see the "State Uniformity Margin" chapter), which means BM is
-triggered with a theoretical probability of 2<sup>-63</sup> to 2<sup>-60</sup>
-for a 64-bit seed: this can be considered negligible for non-cryptographic use
-cases, with the additional complexity outlined below.
+However, one should consider the probability of a BM event occurring with
+practical inputs in the context of a brute-force attack. Such an attack would
+continuously scan a set of inputs without knowledge of a fixed seed. Given
+that the `a5hash` state is unbiased and approximates an expected random
+collision statistics for both of its variables (`Seed1` and `Seed2`) at all
+times (minus a 1- to 4-bit entropy margin, as detailed in the "State
+Uniformity Margin" chapter), BM is triggered in either variable with a
+theoretical probability of 2^-63 (optimistic) or 2^-60 (pessimistic) for a
+64-bit seed. In either case, this probability can be considered negligible
+for non-cryptographic use cases.
 
 When the `UseSeed` is unknown, and when the output of the hash function is
 unknown (as in the case of server-side structures), it is impossible for an
 attacker to know immediately whether BM was triggered in any of the hash
-function's iterations: collision confirmation requires a
-statistically-significant timing information thus needing hash collisions to
+function iterations: collision confirmation requires a
+statistically-significant timing information, thus needing hash collisions to
 accumulate quickly to be measurable. This requires not only triggering BM in
 one of the state variables, but also validating that a series of additional
-inputs yields multiple collisions: this additionally increases the "cost" of
-attack exponentially, depending on the timing noise level.
+inputs yields multiple collisions. This additionally increases the "cost" of
+such attack exponentially, depending on the timing noise level.
 
-To sum up, `a5hash()` and `a5hash128()` are practically resistant to the
-"blinding multiplication" in the general case, when either hash function's
-`UseSeed` is unknown and hash function's output is not exposed.
+To summarize, `a5hash()` and `a5hash128()` are practically secure against the
+"blinding multiplication" attack when an attacker does not know the `UseSeed`
+and cannot see the hash output. This resistance is specific and should not be
+construed as a guarantee of overall cryptographic security.
 
 This conclusion applies only to hash functions that use a 64-bit seed.
 The 32-bit `a5hash32()` function should not be used in open systems due to
 security concerns.
 
-## Why A5?
-
-The constants `0xAAAA...` and `0x5555...` used in `a5hash` and `a5rand`
-represent repetitions of `10` and `01` bit-pairs. While they do not look
-special as adders in PRNGs, or even look controversial due to absence of
-spectral information, they have the important property of substantially
-reducing internal biases of any number.
-
-Consider this code, which calculates the sum of internal successive bit
-independence estimates of a set of numbers, and same of numbers XORed and
-summed with the `0xAAAA` constant, if a number's bit independence is low:
-
-```c
-#include <stdio.h>
-
-int count_indep( int v )
-{
-    int c = 0;
-    for( int i = 0; i < 14; i++ )
-    {
-        c += __builtin_popcount(( v ^ v << ( i + 1 )) >> ( i + 1 ));
-    }
-    return( c );
-}
-
-int main(void)
-{
-    int c1 = 0, c2 = 0, c3 = 0;
-    for( int i = 0; i < ( 1 << 16 ); i++ )
-    {
-        int c = count_indep( i );
-        if( c < 70 )
-        {
-            c1 += c;
-            c2 += count_indep( i ^ 0xAAAA );
-            c3 += count_indep( i + 0xAAAA );
-        }
-    }
-    printf( "%i %i %i\n", c1, c2, c3 );
-}
-```
-
-Output:
-
-```
-76090 149759 160004
-```
-
 ## Thanks
 
 The author acknowledges [Alisa Sireneva](https://github.com/purplesyringa),
 although their rhetoric was predominantly negative, for discovering a
-potential issue in the original `a5hash v1`. This issue, which required inputs
-longer than 1000 bytes, was fully resolved in `a5hash v5`.
+potential issue in the original `a5hash v1`. This issue, which manifests with
+certain inputs longer than 1000 bytes, was fully resolved in `a5hash v5`.
 
-Thanks to Frank J. T. Wojcik and prior authors for
+Thanks to Frank J. T. Wojcik and previous authors for
 [SMHasher3](https://gitlab.com/fwojcik/smhasher3).
 
 Thanks to Chris Doty-Humphrey for
 [PractRand](https://pracrand.sourceforge.net/).
 
-Thanks to the team developing [DeepSeek](https://www.deepseek.com/) chat which
+Thanks to the team developing [DeepSeek chat](https://www.deepseek.com/) that
 helps with grammar and consistency evaluation.
 
 ## No Thanks
