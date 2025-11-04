@@ -262,8 +262,8 @@ Output:
 76090 149759 160004 145679 155002
 ```
 
-The standard "bit independence criteria" quantification applied to the numbers
-themselves demonstrates a similar improvement, although less variable:
+The standard "bit independence criterion" quantification applied to the
+numbers themselves demonstrates a similar improvement, although less variable:
 
 ```c
 #include <stdio.h>
