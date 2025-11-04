@@ -1,7 +1,7 @@
 /**
  * @file a5hash.h
  *
- * @version 5.18
+ * @version 5.19
  *
  * @brief The header file for the "a5hash" 64-bit hash function, "a5hash32"
  * 32-bit hash function, "a5hash128" 128-bit hash function, and "a5rand"
@@ -12,7 +12,7 @@
  *
  * Description is available at https://github.com/avaneev/a5hash
  *
- * E-mail: aleksey.vaneev@gmail.com or info@voxengo.com
+ * Email: aleksey.vaneev@gmail.com or info@voxengo.com
  *
  * LICENSE:
  *
@@ -40,7 +40,7 @@
 #ifndef A5HASH_INCLUDED
 #define A5HASH_INCLUDED
 
-#define A5HASH_VER_STR "5.18" ///< A5HASH source code version string.
+#define A5HASH_VER_STR "5.19" ///< A5HASH source code version string.
 
 /**
  * @def A5HASH_NS_CUSTOM
@@ -363,6 +363,8 @@ A5HASH_INLINE_F uint64_t a5hash( const void* const Msg0, size_t MsgLen,
 		} while( MsgLen > 16 );
 	}
 
+	const uint8_t* const Msg4 = Msg + MsgLen - 4;
+
 	if( MsgLen < 4 )
 	{
 		if( MsgLen != 0 )
@@ -382,7 +384,6 @@ A5HASH_INLINE_F uint64_t a5hash( const void* const Msg0, size_t MsgLen,
 	}
 	else
 	{
-		const uint8_t* const Msg4 = Msg + MsgLen - 4;
 		const size_t mo = MsgLen >> 3;
 
 		Seed1 ^= (uint64_t) a5hash_lu32( Msg ) << 32 | a5hash_lu32( Msg4 );
@@ -549,8 +550,8 @@ A5HASH_INLINE_F uint32_t a5hash32( const void* const Msg0, size_t MsgLen,
 	a5hash_umul64( c + Seed3, d + Seed4, &Seed3, &Seed4 );
 
 _fin:
-	Seed1 ^= Seed3;
-	Seed2 ^= Seed4;
+	Seed1 ^= Seed4;
+	Seed2 ^= Seed3;
 
 	a5hash_umul64( a + Seed1, b + Seed2, &Seed1, &Seed2 );
 
@@ -620,7 +621,7 @@ A5HASH_INLINE uint64_t a5hash128( const void* const Msg0, size_t MsgLen,
 
 			if( rh != A5HASH_NULL )
 			{
-				a5hash_umul128( Seed1 ^ Seed3, Seed2 ^ Seed4, &Seed3, &Seed4 );
+				a5hash_umul128( Seed1 ^ Seed4, Seed2 ^ Seed3, &Seed3, &Seed4 );
 
 				Seed3 ^= Seed4;
 				memcpy( rh, &Seed3, 8 );
@@ -663,8 +664,8 @@ A5HASH_INLINE uint64_t a5hash128( const void* const Msg0, size_t MsgLen,
 		a5hash_umul128( c + Seed3, d + Seed4, &Seed3, &Seed4 );
 
 	_fin:
-		Seed1 ^= Seed3;
-		Seed2 ^= Seed4;
+		Seed1 ^= Seed4;
+		Seed2 ^= Seed3;
 
 		a5hash_umul128( a + Seed1, b + Seed2, &Seed1, &Seed2 );
 
@@ -674,7 +675,7 @@ A5HASH_INLINE uint64_t a5hash128( const void* const Msg0, size_t MsgLen,
 
 		if( rh != A5HASH_NULL )
 		{
-			a5hash_umul128( Seed1 ^ Seed3, Seed2 ^ Seed4, &Seed3, &Seed4 );
+			a5hash_umul128( Seed1 ^ Seed4, Seed2 ^ Seed3, &Seed3, &Seed4 );
 
 			Seed3 ^= Seed4;
 			memcpy( rh, &Seed3, 8 );
@@ -728,10 +729,10 @@ A5HASH_INLINE uint64_t a5hash128( const void* const Msg0, size_t MsgLen,
 
 			} while( MsgLen > 64 );
 
-			Seed1 ^= Seed5;
-			Seed2 ^= Seed6;
-			Seed3 ^= Seed7;
-			Seed4 ^= Seed8;
+			Seed1 ^= Seed6;
+			Seed2 ^= Seed5;
+			Seed3 ^= Seed8;
+			Seed4 ^= Seed7;
 
 			if( MsgLen > 32 )
 			{
