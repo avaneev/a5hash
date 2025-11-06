@@ -26,7 +26,7 @@ large data or file hashing...
 `a5hash()` was designed to be ultimately fast only for common string and
 small-key hash-maps, and hash-tables, by utilizing the "forced inlining"
 feature present in most modern C and C++ compilers: this is easily achievable,
-since in its compiled binary form, `a5hash()` is very small - about 300 bytes
+since in its compiled binary form, `a5hash()` is very small - about 310 bytes
 on x86-64 and arm64. Moreover, if the default seed (0) is used, or if data of
 a compile-time constant size is hashed, these conditions further reduce
 the code size and increase the hashing throughput.
@@ -83,7 +83,7 @@ int main(void)
     const char s1[] = "This is a test of a5hash.";
     const char s2[] = "7 chars";
 
-    printf( "0x%016llx\n", a5hash( s1, strlen( s1 ), 0 )); // 0x263ac96450b128bc
+    printf( "0x%016llx\n", a5hash( s1, strlen( s1 ), 0 )); // 0xa04d5b1d10d1f246
     printf( "0x%016llx\n", a5hash( s2, strlen( s2 ), 0 )); // 0xe49a0cc72256bbac
 }
 ```
@@ -96,7 +96,7 @@ general-purpose inline function which implements a portable unsigned 64x64 to
 
 The `a5hash128()` function produces 128-bit hashes, and, compared to 64-bit
 `a5hash()` function, features a significantly higher performance for large
-data hashing - 50 GB/s on Ryzen 9950X. It is also fairly fast for use in
+data hashing - 48 GB/s on Ryzen 9950X. It is also fairly fast for use in
 hash-maps, but a bit slower than the `a5hash()` function. Among 128-bit hashes
 that pass the state-of-the-art tests, it's likely the fastest 128-bit hash
 function for hash-maps.
@@ -116,17 +116,18 @@ int main(void)
 
     h[ 0 ] = a5hash128( s1, strlen( s1 ), 0, h + 1 );
 
-    printf( "0x%016llx%016llx\n", h[ 0 ], h[ 1 ]); // 0x149b0acfc8e7ca45cc02441ec709083b
+    printf( "0x%016llx%016llx\n", h[ 0 ], h[ 1 ]); // 0xdd2f427007acd1b23609225842ec8020
 }
 ```
 
 ## Comparisons
 
 The benchmark was performed using [SMHasher3](https://gitlab.com/fwojcik/smhasher3)
-on a Xeon E-2386G (RocketLake) running AlmaLinux 9.3. This benchmark includes
-only the fastest hash functions that pass all state-of-the-art tests.
-`XXH3-64` here does not, but it is too popular to exclude it. `rapidhash` is a
-replacement for `wyhash`.
+(commit `7be7e9e820724779926c052db41c15bf88d5863b`) on a Xeon E-2386G
+(Rocket Lake) running AlmaLinux 9.3. This benchmark includes only the fastest
+hash functions that pass all state-of-the-art tests. `XXH3-64` here does not,
+but it is too popular to exclude it. `rapidhash` source code explicitly notes
+it is based on `wyhash`.
 
 Small-key speed values are in cycles per hash, while other values are in
 cycles per operation. `std init` and `std run` are `std::unordered_map` init
@@ -135,7 +136,7 @@ init and running tests. All values are averages over 10 runs.
 
 | Hash function | Small-key speed | std init | std run | par init | par run |
 |---------------|-----------------|----------|---------|----------|---------|
-| a5hash        | **17.20**       | **523**  | **404** | 294      | **277** |
+| a5hash        | **11.50**       | **523**  | **404** | 294      | **277** |
 | rapidhash     | 18.10           | 526      | 430     | 308      | 292     |
 | rust-ahash-fb | 19.33           | 533      | 429     | 286      | 304     |
 | XXH3-64       | 21.31           | 533      | 428     | 292      | 290     |
