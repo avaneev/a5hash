@@ -37,7 +37,8 @@ in server-side internal structures, they should only be used with a secret
 seed, and their output should not be exposed. This is especially important if
 a malicious party is likely to try to influence the hash outputs. However, if
 "blinding multiplication" occurs at a random iteration, these functions
-immediately recover from the zeroed-out state (see below).
+immediately recover from the zeroed-out state (see below). `a5hash` functions
+should not be used for MACs or other strictly cryptographic purposes.
 
 `a5hash` hash functions produce different hashes on big- and little-endian
 systems. This was a deliberate design choice to narrow down the scope of use
@@ -47,11 +48,11 @@ fast hash function for files, with portable hashes, [komihash](https://github.co
 is a great choice.
 
 Overall, `a5hash` achieves three goals: attains an ultimate speed for run-time
-hashing, has very small code size, and uses a novel mathematical construct.
-Compared to most, if not all, existing hash functions, `a5hash` hash functions
-do not use explicit accumulators or folding of state variables: the full
-128-bit result of multiplication is used directly as input on the next
-iteration. This construction appears to be near the minimal complexity
+hashing of small keys, has very small code size, and uses a novel mathematical
+construct. Compared to most, if not all, existing hash functions, `a5hash`
+hash functions do not use explicit accumulators or folding of state variables:
+the full 128-bit result of multiplication is used directly as input on the
+next iteration. This construction appears to be near the minimal complexity
 required for high-quality hashing (in the `SMHasher` testing sense). Such
 a conclusion stems from the fact that the `a5hash()` function is structurally
 simple, and further reduction of the number of operations seems impossible,
@@ -339,10 +340,13 @@ At the same time, the empirical evidence is usually sufficient for
 non-cryptographic contexts, even though it does not constitute hard proof.
 The following example provides evidence that the `a5hash()` function -
 specifically, its core operation, the `a5rand()` function - retains
-practically a uniformly random output on every iteration. In this example,
-the `out` value is provided to and analyzed by `PractRand`, which passes
-statistical tests for uniform randomness. Here, the `ent` value acts as
-an input message with a sparse structure.
+practically a uniformly random output on every iteration. It models the entire
+hashing process, from the initial input to the final output, which uses
+equivalent operations.
+
+In this example, the `out` value is provided to and analyzed by `PractRand`,
+which passes statistical tests for uniform randomness. Here, the `ent` value
+acts as an input message with a sparse structure.
 
 ```c
 uint64_t Seed1, Seed2, ent, out, Ctr = 0;
@@ -361,11 +365,13 @@ multiplications maintain output uniformity for at least one iteration -
 and typically several - even without the addition of the `val01` and `val10`
 constants to the state variables.
 
-However, this does not touch on the statistics of internal state variables.
-It should be noted that they cannot be used directly as high-quality uniformly
-random values. But in the context of the "blinding multiplication" claim
-below, the following code is sufficient evidence of the absence of bias in
-the hash function's state:
+### State Uniformity
+
+However, the above written does not touch on the statistics of internal state
+variables. It should be noted that they cannot be used directly as
+high-quality uniformly random values. But in the context of the "blinding
+multiplication" claim below, the following code is sufficient evidence of the
+absence of bias in the hash function's state:
 
 ```c
 #include <stdio.h>
@@ -407,7 +413,7 @@ int main(void)
 }
 ```
 
-As expected, this code detects about 8\*2^12 matches (the `ent` is not added
+As expected, this code detects about `8\*2^12` matches (the `ent` is not added
 to the seeds here, but its addition decreases collisions due to
 auto-correlation effects). Admittedly, by itself this is not a strong evidence
 for the hash function state's uniformity. But it is adequate to demonstrate
@@ -420,7 +426,7 @@ distribution, for structured inputs with any initial seed. Additionally,
 the state variables follow the same multi-lag auto-correlation statistics as
 uniformly random numbers (see the `count_indep()` function above).
 
-## State Uniformity Margin
+### State Uniformity Margin
 
 Although the state variables are approximately uniform, a bit-independence
 test between the hash function's randomly chosen `UseSeed` parameter and
@@ -444,23 +450,31 @@ the entropy by only up to 3 bits.
 
 ## Blinding Multiplication
 
-"Blinding multiplication" (BM) is a common issue in almost all fast hash
-functions based on NxN bit multiplication involving 2\*N bit input per
-iteration. BM happens during hashing iterations, when one of the input values
-coincides (via XOR or addition) with a hash function's current state or
-constants, yielding a zero result. While each such hash function tries to
-handle BM, in general it is impossible to completely "fix" BM without reducing
-a hash function's performance.
+"Blinding multiplication" (BM), or more broadly, "state cancellation," is
+a common issue in almost all fast hash functions based on NxN bit
+multiplication involving 2\*N-bit input per iteration. BM happens during
+hashing iterations when one of the input values coincides (via XOR or
+addition) with a hash function's current state or constants, resulting in
+a zero value - the only outcome that poses a problem. While each such hash
+function attempts to handle BM, it is generally impossible to eliminate it
+completely without reducing a hash function's performance.
+
+BM should not be confused with the Birthday Paradox problem. Statistically,
+BM is a problem concerning the equality of an arbitrary input and an
+independent, uniformly distributed value, which has a theoretical probability
+of `2^-64` for 64-bit variables.
 
 Statistically speaking, a hash function's state may transiently become zero,
 and it is a probable outcome. However, this becomes problematic if the hash
 function can't recover from it rapidly and retain the seeded state. `a5hash`
-instantly recovers from occasional BM within iteration via subsequent addition
-of `val01` and `val10` constants derived from the unknown initial seed, with
-its further state being similarly unknown. In contrast, the "unprotected"
-`rapidhash` does not recover the seed - it becomes zero, and thus the state
-becomes known (this and the next claim can be verified by carefully examining
-the `rapid_mum()` function in the context of the source code of `rapidhash`).
+instantly recovers from occasional BM within iteration via the subsequent
+addition of `val01` and `val10` constants. This is not an ad-hoc fix, but a
+part of the hashing iterations. These constants are derived from the unknown
+initial seed, and the further state of the function remains similarly unknown.
+In contrast, the "unprotected" `rapidhash` does not recover the seed - it
+becomes zero, and thus the state becomes known (this and the next claim can be
+verified by carefully examining the `rapid_mum()` function in the context of
+the source code of `rapidhash`).
 
 Another issue is that NxN bit multiplication which yields zero, discards
 half of 2\*N bit input completely, potentially leading to collisions.
@@ -477,10 +491,10 @@ similar to the code example in the "Uniformity Analysis" chapter that
 evaluates collisions with structured inputs.
 
 Given that the `a5hash` state is unbiased and approximates an expected random
-collision statistics for both of its variables (`Seed1` and `Seed2`) at all
+collision statistics for two of its variables (`Seed1` and `Seed2`) at all
 times (minus a 1- to 4-bit entropy margin, as detailed in the "State
 Uniformity Margin" chapter), BM is triggered in either variable with
-a theoretical probability of 2^-62 (optimistic) or 2^-59 (pessimistic) for
+a theoretical probability of `2^-62` (optimistic) or `2^-59` (pessimistic) for
 a 64-bit secret seed. In either case, this probability can be considered
 negligible for non-cryptographic use cases.
 
@@ -495,11 +509,11 @@ This requires an attacker to not only trigger a BM in one of the state
 variables but also to validate that a series of additional inputs produces
 multiple collisions. The "cost" of such an attack increases exponentially with
 the timing noise level. For instance, if an attacker can measure a response
-with 100-microsecond precision, but the hash-map collision mitigation
-completes in 2 microseconds (or 5,000 cycles - a reasonable estimate for
-modern systems), the attacker would need at least 64 additional inputs per BM
-assessment. This represents a 2^6 (or a 64-fold) increase in the number of
-required inputs.
+with 100-microsecond precision over a public network, but the hash-map
+collision mitigation completes in 2 microseconds (or 5,000 cycles -
+a reasonable estimate for modern systems), the attacker would need at least 64
+additional inputs per BM assessment. This represents a `2^6` (or a 64-fold)
+increase in the number of required inputs.
 
 To summarize, `a5hash()` and `a5hash128()` are practically secure against the
 "blinding multiplication" attack when the `UseSeed` is kept secret and hash
