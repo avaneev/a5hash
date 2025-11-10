@@ -26,10 +26,10 @@ large data or file hashing...
 `a5hash()` was designed to be ultimately fast only for common string and
 small-key hash-maps, and hash-tables, by utilizing the "forced inlining"
 feature present in most modern C and C++ compilers: this is easily achievable,
-since in its compiled binary form, `a5hash()` is very small - about 310 bytes
-on x86-64 and arm64. Moreover, if the default seed (0) is used, or if data of
-a compile-time constant size is hashed, these conditions further reduce
-the code size and increase the hashing throughput.
+since in its compiled binary form, `a5hash()` is very small - about 270 to
+330 bytes on x86-64 and arm64. Moreover, if the default seed (0) is used, or
+if data of a compile-time constant size is hashed, these conditions further
+reduce the code size and increase the hashing throughput.
 
 Note that `a5hash` functions are not cryptographically secure. To minimize
 the risk of a successful collision attack (hash flooding) in open systems and

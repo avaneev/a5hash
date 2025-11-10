@@ -1,7 +1,7 @@
 /**
  * @file a5hash.h
  *
- * @version 5.20
+ * @version 5.21
  *
  * @brief The header file for the "a5hash" 64-bit hash function, "a5hash32"
  * 32-bit hash function, "a5hash128" 128-bit hash function, and "a5rand"
@@ -40,7 +40,7 @@
 #ifndef A5HASH_INCLUDED
 #define A5HASH_INCLUDED
 
-#define A5HASH_VER_STR "5.20" ///< A5HASH source code version string.
+#define A5HASH_VER_STR "5.21" ///< A5HASH source code version string.
 
 /**
  * @def A5HASH_NS_CUSTOM
@@ -365,40 +365,47 @@ A5HASH_INLINE_F uint64_t a5hash( const void* const Msg0, size_t MsgLen,
 		} while( MsgLen > 16 );
 	}
 
-	const uint8_t* const Msg4 = Msg + MsgLen - 4;
-
-	if( MsgLen < 4 )
+	if( MsgLen == 0 )
 	{
-		if( MsgLen != 0 )
-		{
-			Seed1 ^= Msg[ 0 ];
-
-			if( --MsgLen != 0 )
-			{
-				Seed1 ^= (uint64_t) Msg[ 1 ] << 8;
-
-				if( --MsgLen != 0 )
-				{
-					Seed1 ^= (uint64_t) Msg[ 2 ] << 16;
-				}
-			}
-		}
+		goto _fin;
 	}
-	else
+
+	if( MsgLen > 3 )
 	{
-		const size_t mo = MsgLen >> 3;
+		const uint8_t* Msg4;
+		size_t mo;
+
+		Msg4 = Msg + MsgLen - 4;
+		mo = MsgLen >> 3;
 
 		Seed1 ^= (uint64_t) a5hash_lu32( Msg ) << 32 | a5hash_lu32( Msg4 );
 
 		Seed2 ^= (uint64_t) a5hash_lu32( Msg + mo * 4 ) << 32 |
 			a5hash_lu32( Msg4 - mo * 4 );
+
+	_fin:
+		a5hash_umul128( Seed1, Seed2, &Seed1, &Seed2 );
+
+		a5hash_umul128( val01 ^ Seed1, Seed2, &Seed1, &Seed2 );
+
+		return( Seed1 ^ Seed2 );
 	}
+	else
+	{
+		Seed1 ^= Msg[ 0 ];
 
-	a5hash_umul128( Seed1, Seed2, &Seed1, &Seed2 );
+		if( --MsgLen != 0 )
+		{
+			Seed1 ^= (uint64_t) Msg[ 1 ] << 8;
 
-	a5hash_umul128( val01 ^ Seed1, Seed2, &Seed1, &Seed2 );
+			if( --MsgLen != 0 )
+			{
+				Seed1 ^= (uint64_t) Msg[ 2 ] << 16;
+			}
+		}
 
-	return( Seed1 ^ Seed2 );
+		goto _fin;
+	}
 }
 
 /**
