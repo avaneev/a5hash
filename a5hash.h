@@ -1,7 +1,7 @@
 /**
  * @file a5hash.h
  *
- * @version 5.21
+ * @version 5.22
  *
  * @brief The header file for the "a5hash" 64-bit hash function, "a5hash32"
  * 32-bit hash function, "a5hash128" 128-bit hash function, and "a5rand"
@@ -40,7 +40,7 @@
 #ifndef A5HASH_INCLUDED
 #define A5HASH_INCLUDED
 
-#define A5HASH_VER_STR "5.21" ///< A5HASH source code version string.
+#define A5HASH_VER_STR "5.22" ///< A5HASH source code version string.
 
 /**
  * @def A5HASH_NS_CUSTOM
@@ -168,20 +168,28 @@
 #endif // defined( _MSC_VER )
 
 /**
- * @def A5HASH_INLINE
- * @brief Macro that defines a function as inlinable at compiler's discretion.
+ * @def A5HASH_STATIC
+ * @brief Macro that defines a function as "static".
  */
 
 #if ( defined( __cplusplus ) && __cplusplus >= 201703L ) || \
 	( defined( __STDC_VERSION__ ) && __STDC_VERSION__ >= 202311L )
 
-	#define A5HASH_INLINE [[maybe_unused]] static inline
+	#define A5HASH_STATIC [[maybe_unused]] static
 
 #else // defined( __cplusplus )
 
-	#define A5HASH_INLINE static inline
+	#define A5HASH_STATIC static
 
 #endif // defined( __cplusplus )
+
+/**
+ * @def A5HASH_INLINE
+ * @brief Macro that defines a function as inlinable at the compiler's
+ * discretion.
+ */
+
+#define A5HASH_INLINE A5HASH_STATIC inline
 
 /**
  * @def A5HASH_INLINE_F
@@ -199,7 +207,7 @@
 
 	#elif defined( _MSC_VER )
 
-		#define A5HASH_INLINE_F A5HASH_INLINE __forceinline
+		#define A5HASH_INLINE_F A5HASH_STATIC __forceinline
 
 	#endif // defined( _MSC_VER )
 
@@ -859,6 +867,7 @@ using A5HASH_NS :: a5rand;
 #undef A5HASH_ICC_GCC
 #undef A5HASH_GCC_BUILTINS
 #undef A5HASH_BMI2
+#undef A5HASH_STATIC
 #undef A5HASH_INLINE
 #undef A5HASH_INLINE_F
 
