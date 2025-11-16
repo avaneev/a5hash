@@ -1,7 +1,7 @@
 /**
  * @file a5hash.h
  *
- * @version 5.22
+ * @version 5.23
  *
  * @brief The header file for the "a5hash" 64-bit hash function, "a5hash32"
  * 32-bit hash function, "a5hash128" 128-bit hash function, and "a5rand"
@@ -40,7 +40,7 @@
 #ifndef A5HASH_INCLUDED
 #define A5HASH_INCLUDED
 
-#define A5HASH_VER_STR "5.22" ///< A5HASH source code version string.
+#define A5HASH_VER_STR "5.23" ///< A5HASH source code version string.
 
 /**
  * @def A5HASH_NS_CUSTOM
@@ -110,7 +110,7 @@
 
 	#define A5HASH_U64_C( x ) (uint64_t) x
 	#define A5HASH_NOEX
-	#define A5HASH_NULL 0
+	#define A5HASH_NULL NULL
 
 #endif // defined( __cplusplus )
 
@@ -177,11 +177,15 @@
 
 	#define A5HASH_STATIC [[maybe_unused]] static
 
-#else // defined( __cplusplus )
+#elif defined( LZAV_GCC_BUILTINS )
+
+	#define LZAV_STATIC static __attribute__((unused))
+
+#else // defined( LZAV_GCC_BUILTINS )
 
 	#define A5HASH_STATIC static
 
-#endif // defined( __cplusplus )
+#endif // defined( LZAV_GCC_BUILTINS )
 
 /**
  * @def A5HASH_INLINE
