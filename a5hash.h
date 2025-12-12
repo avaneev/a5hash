@@ -1,7 +1,7 @@
 /**
  * @file a5hash.h
  *
- * @version 5.23
+ * @version 5.24
  *
  * @brief The header file for the "a5hash" 64-bit hash function, "a5hash32"
  * 32-bit hash function, "a5hash128" 128-bit hash function, and "a5rand"
@@ -40,7 +40,7 @@
 #ifndef A5HASH_INCLUDED
 #define A5HASH_INCLUDED
 
-#define A5HASH_VER_STR "5.23" ///< A5HASH source code version string.
+#define A5HASH_VER_STR "5.24" ///< A5HASH source code version string.
 
 /**
  * @def A5HASH_NS_CUSTOM
@@ -807,18 +807,14 @@ A5HASH_INLINE uint64_t a5hash128( const void* const Msg0, size_t MsgLen,
  * A simple, reliable, self-starting, yet efficient PRNG with a 2^64 period.
  * 0.50 cycles/byte performance. It self-starts in 4 iterations, which is the
  * suggested "warm-up" period before using its output when seeds are
- * initialized with arbitrary values.
- *
- * The `Seed1` and `Seed2` variables can be independently initialized with two
- * high-quality, uniformly random values (e.g., from the operating system's
- * entropy or a hash function's outputs). Such initialization reduces the
- * number of "warm-up" iterations required, making the PRNG output valid
- * from the start.
+ * initialized with an arbitrary value. If initialized with high-quality,
+ * uniformly random value (e.g., from the operating system's entropy or a
+ * hash function's output), the PRNG output is valid from the start.
  *
  * @param[in,out] Seed1 Seed value 1. Can be initialized to any value
  * (even 0). Should not be used as the PRNG value.
- * @param[in,out] Seed2 Seed value 2. In the simplest case, can be initialized
- * to the same value as `Seed1`. Should not be used as the PRNG value.
+ * @param[in,out] Seed2 Seed value 2. Must be initialized to the same value as
+ * `Seed1`. Should not be used as the PRNG value.
  * @return The next uniformly random 64-bit value.
  */
 

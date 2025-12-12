@@ -174,7 +174,7 @@ a simple, but reliable, self-starting, and fast (`0.50` cycles/byte) 64-bit
 pseudo-random number generator (PRNG) with a `2^64` period. It is based on
 the same mathematical construct as the `a5hash()` hash function. `a5rand()`
 passes `PractRand` tests (at least up to 1 TB length, at the default
-settings).
+settings) and `SmokeRand` tests (full setting).
 
 ```c
 #include <stdio.h>
