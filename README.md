@@ -2,9 +2,9 @@
 
 ## Introduction
 
-The `a5hash` family of hash functions available in the `a5hash.h` file
-offers you high-performance hash functions, designed for hash-table, hash-map,
-and bloom-filter use cases. The functions' code is portable, cross-platform,
+The `a5hash` family of hash functions, available in the `a5hash.h` header
+file, provides high-performance hash functions, designed for hash-table,
+hash-map, and bloom-filter use cases. The code is portable, cross-platform,
 scalar, zero-allocation, header-only, inlinable C (compatible with C++).
 Released in open-source form under the MIT license.
 
@@ -12,7 +12,7 @@ The provided 64-bit and 128-bit hash functions of the `a5hash` family are
 compatible with 32-bit platforms, but their use there is not recommended due
 to reduced performance of a 64-bit multiplication. On 32-bit platforms it is
 recommended to use the available `a5hash32()` function which provides native
-32-bit compatibility, if a 32-bit hash values are sufficient.
+32-bit compatibility, if 32-bit hash values are sufficient.
 
 The `a5hash()` 64-bit function achieves very high hashing throughput for small
 strings/messages (about 11 cycles/hash for 0-64-byte strings, hashed
@@ -21,7 +21,7 @@ repeatedly on Zen 5). The bulk throughput is intentionally moderately fast
 perform well both for common keyed string hash-maps and large data hashing.
 In most cases, this is done for the sake of better benchmark results, even
 though such hash functions rarely provide the streamed hashing required for
-large data or file hashing...
+large data or file hashing.
 
 `a5hash()` was designed to be ultimately fast only for common string and
 small-key hash-maps, and hash-tables, by utilizing the "forced inlining"
@@ -36,16 +36,17 @@ the risk of a successful collision attack (hash flooding) in open systems and
 in server-side internal structures, they should only be used with a secret
 seed, and their output should not be exposed. This is especially important if
 a malicious party is likely to try to influence the hash outputs. However, if
-"blinding multiplication" occurs at a random iteration, these functions
-immediately recover from the zeroed-out state (see below). `a5hash` functions
-should not be used for MACs or other strictly cryptographic purposes.
+"blinding multiplication" (BM, state cancellation) occurs at a random
+iteration, these functions immediately recover from the zeroed-out state
+(see below). `a5hash` functions should not be used for MACs or other strictly
+cryptographic purposes.
 
 `a5hash` hash functions produce different hashes on big- and little-endian
 systems. This was a deliberate design choice to narrow down the scope of use
 cases to run-time hashing and embedded storage, as endianness correction
-usually imposes a significant performance penalty. If you need a reliable and
-fast hash function for files, with portable hashes, [komihash](https://github.com/avaneev/komihash)
-is a great choice.
+usually imposes a significant performance penalty. If a reliable and fast hash
+function for files, with portable hashes, is needed,
+[komihash](https://github.com/avaneev/komihash) is a great choice.
 
 Overall, `a5hash` achieves three goals: attains an ultimate speed for run-time
 hashing of small keys, has very small code size, and uses a novel mathematical
@@ -74,6 +75,8 @@ AArch64 (Apple Silicon) architectures; Windows 11, AlmaLinux 9.3, and macOS
 the source code is compiled with a C++ compiler.
 
 ## Usage
+
+Simply copy `a5hash.h` into a project. It is a header-only library.
 
 ```c
 #include <stdio.h>
@@ -167,6 +170,12 @@ Note that since all `a5hash` functions have the `static inline` specifier,
 there can be no ABI conflicts, even if the `a5hash.h` header is included in
 unrelated, mixed C/C++, compilation units.
 
+## Seeding
+
+All `a5hash` functions can be seeded with values of any statistical quality.
+However, a resistance against hash flooding requires the seeds to be
+maximum-entropy, uniformly random values.
+
 ## A5RAND
 
 The `a5rand()` function available in the `a5hash.h` file implements
@@ -205,12 +214,14 @@ f7a47a8942e378b5
 aea26585979bf755
 ```
 
-## Why A5?
+## Design Analysis
+
+### Why A5?
 
 The constants `0xAAAA...` and `0x5555...` used in `a5hash()` and `a5rand()`
-represent repetitions of `10` and `01` bit-pairs. While they do not look
-special as adders in PRNGs, or even look controversial due to the absence of
-bit-wise spectral information, they have the important property of
+represent repetitions of `10` and `01` bit-pairs over register. While they do
+not look special as adders in PRNGs, or even look controversial due to the
+absence of bit-wise spectral information, they have the important property of
 substantially reducing internal biases of any given number.
 
 Consider this code, which calculates the sum of internal successive bit
@@ -225,13 +236,14 @@ This example empirically explains why both `a5hash()` and `a5rand()` generate
 high-quality random numbers despite their reliance on multiplication,
 an operation with imperfect dispersion. The quantification method is
 reasonable because it aligns with uniformity assessments; for numbers to be
-uniformly random, correlations between successive outputs must be minimal.
+uniformly random, correlations between successive output bits must be minimal,
+and such estimate should not be low.
 
 Additional empirical evidence suggests that while the XOR operation normalizes
 successive bit independence, the addition operation maximizes it. Both
 operations are used in `a5hash` hash functions in accordance with this
 observation. This finding can be evaluated by adjusting the `c < 70` condition
-in the code.
+in the code (112 is expected for 16-bit uniformly random numbers).
 
 ```c
 #include <stdio.h>
@@ -252,7 +264,7 @@ int main(void)
     for( int i = 0; i < ( 1 << 16 ); i++ )
     {
         int c = count_indep( i );
-        if( c < 70 ) // 112 is expected for 16-bit uniformly random numbers.
+        if( c < 70 )
         {
             c1 += c;
             c2 += count_indep( i ^ 0xAAAA );
@@ -316,7 +328,7 @@ Output:
 23520 52640 53056 51600 52280
 ```
 
-## Uniformity Analysis
+### Uniformity Analysis
 
 At the time when this hash function was developed empirically, cryptography
 had no precise and straightforward techniques for differential cryptanalysis
@@ -448,7 +460,7 @@ relative to the theoretical 64-bit entropy. While the significance of the
 variables in three other bits is debatable, accounting for them would reduce
 the entropy by only up to 3 bits.
 
-## Blinding Multiplication
+### Blinding Multiplication
 
 "Blinding multiplication" (BM), or more broadly, "state cancellation," is
 a common issue in almost all fast hash functions based on NxN bit
@@ -515,14 +527,14 @@ a reasonable estimate for modern systems), the attacker would need at least 64
 additional inputs per BM assessment. This represents a `2^6` (or a 64-fold)
 increase in the number of required inputs.
 
-To summarize, `a5hash()` and `a5hash128()` are practically secure against the
-"blinding multiplication" attack when the `UseSeed` is kept secret and hash
-outputs are not exposed. But this resistance is specific and should not be
+In summary, when used with a secret 64-bit seed and non-exposed outputs,
+`a5hash()` and `a5hash128()` are practically resistant to blinding
+multiplication attacks. But this resistance is specific and should not be
 construed as a complete cryptographic security evaluation.
 
 This conclusion applies only to hash functions that use a 64-bit seed.
 The 32-bit `a5hash32()` function should not be used in open systems due to
-security concerns.
+32-bit seeding.
 
 ## Thanks
 
